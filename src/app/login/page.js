@@ -1,13 +1,16 @@
-// app/login/page.js
+// src/app/login/page.js
 "use client";
 
 import React, { useRef } from "react";
 import { useRouter } from "next/navigation";
-import { auth } from "../../lib/firebaseClient";
+import { auth } from "../../lib/firebaseClient"; // <-- keep this if firebaseClient is at src/lib
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
 } from "firebase/auth";
+
+// Card is outside src (project root /components/Card.js)
+import Card from "../../../components/card";
 
 export default function Page() {
   const router = useRouter();
@@ -39,15 +42,12 @@ export default function Page() {
 
   function setMode(newMode) {
     modeRef.current = newMode;
-    // update header text and button text imperatively
-    if (headingRef.current) {
+    if (headingRef.current)
       headingRef.current.textContent =
         newMode === "login" ? "Login" : "Create account";
-    }
-    if (submitBtnRef.current) {
+    if (submitBtnRef.current)
       submitBtnRef.current.textContent =
         newMode === "login" ? "Login" : "Create account";
-    }
     if (messageRef.current) messageRef.current.textContent = "";
   }
 
@@ -84,7 +84,7 @@ export default function Page() {
       } else {
         await createUserWithEmailAndPassword(auth, email, password);
       }
-      // success -> redirect
+      // on success redirect home
       router.push("/");
     } catch (err) {
       setMessage(friendlyMessage(err.code, err.message));
@@ -95,130 +95,97 @@ export default function Page() {
 
   return (
     <div
+      className="min-h-screen bg-neutral-950 flex items-start justify-center py-12 px-4"
       style={{
-        maxWidth: 360,
-        margin: "50px auto",
-        padding: 20,
-        border: "1px solid #ccc",
-        borderRadius: 8,
-        background: "#fff",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        flex: 1,
       }}
     >
-      <h2 ref={headingRef} style={{ marginBottom: 12, color: "#111" }}>
-        {modeRef.current === "login" ? "Login" : "Create account"}
-      </h2>
-
       <div
-        ref={messageRef}
-        style={{ marginBottom: 12, minHeight: 18, color: "crimson" }}
-      />
-
-      <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: 10 }}>
-          <label
-            style={{
-              display: "block",
-              fontSize: 14,
-              marginBottom: 6,
-              color: "#111", // ensure label is dark on white card
-            }}
+        className="w-full max-w-md"
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          flex: 1,
+          marginTop: "-200px",
+        }}
+      >
+        {/* Wrap the form inside your Card component for consistent styling */}
+        <Card>
+          {/* Heading inside card so we can update it imperatively */}
+          <h2
+            ref={headingRef}
+            className="text-2xl font-semibold text-white mb-4"
           >
-            Email
-          </label>
-          <input
-            ref={emailRef}
-            type="email"
-            style={{
-              width: "100%",
-              padding: 8,
-              boxSizing: "border-box",
-              color: "#111", // input text color
-              border: "1px solid #ddd",
-              borderRadius: 4,
-              background: "#fff",
-            }}
-            required
-          />
-        </div>
+            {modeRef.current === "login" ? "Login" : "Create account"}
+          </h2>
 
-        <div style={{ marginBottom: 10 }}>
-          <label
-            style={{
-              display: "block",
-              fontSize: 14,
-              marginBottom: 6,
-              color: "#111",
-            }}
-          >
-            Password
-          </label>
-          <input
-            ref={passwordRef}
-            type="password"
-            minLength={6}
-            style={{
-              width: "100%",
-              padding: 8,
-              boxSizing: "border-box",
-              color: "#111",
-              border: "1px solid #ddd",
-              borderRadius: 4,
-              background: "#fff",
-            }}
-            required
-          />
-        </div>
+          <div ref={messageRef} className="min-h-[1.125rem] mb-2 text-sm"></div>
 
-        <button
-          ref={submitBtnRef}
-          type="submit"
-          style={{
-            width: "100%",
-            padding: 12,
-            background: "#3b99e0",
-            color: "white",
-            border: "none",
-            borderRadius: 8,
-            cursor: "pointer",
-            fontSize: 16,
-          }}
-        >
-          {modeRef.current === "login" ? "Login" : "Create account"}
-        </button>
-      </form>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm text-neutral-300 mb-2">
+                Email
+              </label>
+              <input
+                ref={emailRef}
+                type="email"
+                required
+                className="mt-1 w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                placeholder="you@example.com"
+              />
+            </div>
 
-      <div style={{ marginTop: 12, textAlign: "center", fontSize: 14 }}>
-        {modeRef.current === "login" ? (
-          <>
-            Don't have an account?{" "}
+            <div>
+              <label className="block text-sm text-neutral-300 mb-2">
+                Password
+              </label>
+              <input
+                ref={passwordRef}
+                type="password"
+                minLength={6}
+                required
+                className="mt-1 w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                placeholder="••••••••"
+              />
+            </div>
+
             <button
-              onClick={() => setMode("register")}
-              style={{
-                color: "#0ea5e9",
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-              }}
+              ref={submitBtnRef}
+              type="submit"
+              className="w-full rounded-lg bg-indigo-500 px-4 py-2 text-sm font-medium hover:bg-indigo-400 focus:outline-none"
             >
-              Create one
+              {modeRef.current === "login" ? "Login" : "Create account"}
             </button>
-          </>
-        ) : (
-          <>
-            Already have an account?{" "}
-            <button
-              onClick={() => setMode("login")}
-              style={{
-                color: "#0ea5e9",
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-              }}
-            >
-              Login
-            </button>
-          </>
-        )}
+          </form>
+
+          <div className="mt-4 text-sm text-neutral-400">
+            {modeRef.current === "login" ? (
+              <>
+                Don't have an account?{" "}
+                <button
+                  onClick={() => setMode("register")}
+                  className="text-indigo-300 hover:underline ml-1"
+                >
+                  Create one
+                </button>
+              </>
+            ) : (
+              <>
+                Already have an account?{" "}
+                <button
+                  onClick={() => setMode("login")}
+                  className="text-indigo-300 hover:underline ml-1"
+                >
+                  Login
+                </button>
+              </>
+            )}
+          </div>
+        </Card>
       </div>
     </div>
   );

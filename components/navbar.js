@@ -2,11 +2,25 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+// Adjust this path if your file is elsewhere:
+import { auth } from "../src/lib/firebaseClient";
+import { onAuthStateChanged, signOut } from "firebase/auth";
 
-export default function Navbar({ isSignedIn = false }) {
+export default function Navbar() {
   const [open, setOpen] = useState(false);
+  const [user, setUser] = useState(null); // null => signed out, object => signed in
   const ref = useRef(null);
 
+  // subscribe to firebase auth state
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (u) => {
+      // u is null when signed out, user object when signed in
+      setUser(u);
+    });
+    return () => unsub();
+  }, []);
+
+  // close dropdown on outside click / Escape
   useEffect(() => {
     function onDocClick(e) {
       if (ref.current && !ref.current.contains(e.target)) setOpen(false);
@@ -21,6 +35,20 @@ export default function Navbar({ isSignedIn = false }) {
       document.removeEventListener("keydown", onEsc);
     };
   }, []);
+
+  async function handleSignOut() {
+    try {
+      await signOut(auth);
+      setOpen(false);
+      // firebase will call onAuthStateChanged -> setUser(null)
+    } catch (err) {
+      console.error("Sign-out failed", err);
+      // optionally show a toast / message
+    }
+  }
+
+  // label to show in nav button
+  const label = user ? user.displayName || user.email || "Profile" : "Profile";
 
   return (
     <div className="flex w-full justify-between py-6 px-10 border-b bg-neutral-950 border-neutral-500">
@@ -42,8 +70,8 @@ export default function Navbar({ isSignedIn = false }) {
             onClick={() => setOpen((s) => !s)}
             className="flex items-center gap-2 px-3 py-1 rounded hover:bg-neutral-800 focus:outline-none focus:ring-2 focus:ring-sky-500"
           >
-            <span className="hover:underline cursor-pointer select-none">
-              Profile
+            <span className="hover:underline cursor-pointer select-none text-sm">
+              {label}
             </span>
             <svg
               className={`w-4 h-4 transition-transform ${
@@ -64,8 +92,7 @@ export default function Navbar({ isSignedIn = false }) {
               className="absolute right-0 mt-3 w-56 rounded-md shadow-lg bg-white ring-1 ring-black/5 z-50 text-neutral-900"
             >
               <div className="py-1">
-                {/* Not signed in: single login/register link */}
-                {!isSignedIn && (
+                {!user && (
                   <Link
                     href="/login"
                     role="menuitem"
@@ -76,11 +103,33 @@ export default function Navbar({ isSignedIn = false }) {
                   </Link>
                 )}
 
-                {/* Placeholder for signed-in state (we'll implement later) */}
-                {isSignedIn && (
-                  <div className="px-4 py-2 text-sm text-slate-600">
-                    Signed-in menu (TBD)
-                  </div>
+                {user && (
+                  <>
+                    <Link
+                      href="/profile"
+                      role="menuitem"
+                      className="block px-4 py-2 text-sm text-neutral-900 hover:bg-neutral-100"
+                      onClick={() => setOpen(false)}
+                    >
+                      Profile
+                    </Link>
+                    <Link
+                      href="/dashboard"
+                      role="menuitem"
+                      className="block px-4 py-2 text-sm text-neutral-900 hover:bg-neutral-100"
+                      onClick={() => setOpen(false)}
+                    >
+                      Dashboard
+                    </Link>
+
+                    <button
+                      onClick={handleSignOut}
+                      className="w-full text-left px-4 py-2 text-sm text-neutral-900 hover:bg-neutral-100"
+                      role="menuitem"
+                    >
+                      Sign out
+                    </button>
+                  </>
                 )}
               </div>
             </div>
