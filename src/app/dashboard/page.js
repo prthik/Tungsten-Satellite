@@ -3,8 +3,12 @@
 
 import "../globals.css";
 import { useEffect, useMemo, useRef, useState } from "react";
+<<<<<<< HEAD
 import Card, { Header, Badge, RequestForm, RequestsTable, PayloadBuilder } from "../../../components/card";
 
+=======
+import Card, { Header, Badge, RequestForm, RequestsTable, PayloadBuilder } from "../../../components/card";
+>>>>>>> 94608dea47b5403bbe71a597e6080448f18117de
 
 // DASHBOARD PAGE
 // Drop this file at: src/app/dashboard/page.js (or app/dashboard/page.js)
