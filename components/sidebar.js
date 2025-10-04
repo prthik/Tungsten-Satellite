@@ -8,11 +8,9 @@ export default function Sidebar() {
                     <Link href={"/"}>Home</Link>
                 </div>
                 <div className="hover:underline cursor-pointer">
-                   <Link href={"/orrery"}>Orbit Map</Link>
+                    <Link href={"/data"}> Data</Link>
                 </div>
-                <div className="hover:underline cursor-pointer">
-                    <Link href={"/data"}>Orbit Data</Link>
-                </div>
+                
             </div>
         </div>
     )
