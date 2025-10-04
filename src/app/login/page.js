@@ -1,26 +1,34 @@
-
+// src/app/login/page.js
 "use client";
-import "../globals.css";
 
-import React, { useRef } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { auth } from "../../lib/firebaseClient"; // <-- keep this if firebaseClient is at src/lib
+import { auth } from "../../lib/firebaseClient";
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
 } from "firebase/auth";
-
-// Card is outside src (project root /components/Card.js)
 import Card from "../../../components/card";
 
 export default function Page() {
   const router = useRouter();
+
+  // refs for inputs / DOM elements (imperative updates)
   const emailRef = useRef(null);
   const passwordRef = useRef(null);
-  const modeRef = useRef("login"); // "login" or "register"
+  const modeRef = useRef("login"); // keep for imperative parts
+  const [mode, setModeState] = useState("login"); // React state for rendering
   const messageRef = useRef(null);
   const submitBtnRef = useRef(null);
   const headingRef = useRef(null);
+
+  // ensure the submit button text is correct on first mount
+  useEffect(() => {
+    if (submitBtnRef.current) {
+      submitBtnRef.current.textContent =
+        mode === "login" ? "Login" : "Create account";
+    }
+  }, [mode]);
 
   function setMessage(text, color = "crimson") {
     if (messageRef.current) {
@@ -41,8 +49,10 @@ export default function Page() {
     }
   }
 
+  // update both ref and React state so UI + imperative parts stay in sync
   function setMode(newMode) {
     modeRef.current = newMode;
+    setModeState(newMode);
     if (headingRef.current)
       headingRef.current.textContent =
         newMode === "login" ? "Login" : "Create account";
@@ -85,7 +95,7 @@ export default function Page() {
       } else {
         await createUserWithEmailAndPassword(auth, email, password);
       }
-      // on success redirect home
+      // success -> redirect
       router.push("/");
     } catch (err) {
       setMessage(friendlyMessage(err.code, err.message));
@@ -95,36 +105,17 @@ export default function Page() {
   }
 
   return (
-    <div
-      className="min-h-screen bg-neutral-800 text-white flex items-start justify-center py-12 px-4"
-      style={{
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        flex: 1,
-      }}
-    >
-      <div
-        className="w-full max-w-md"
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          flex: 1,
-          marginTop: "-200px",
-        }}
-      >
-        {/* Wrap the form inside your Card component for consistent styling */}
+    <div className="min-h-screen bg-neutral-800 flex items-center justify-center px-4 py-12">
+      <div className="w-full max-w-md">
         <Card>
-          {/* Heading inside card so we can update it imperatively */}
           <h2
             ref={headingRef}
             className="text-2xl font-semibold text-white mb-4"
           >
-            {modeRef.current === "login" ? "Login" : "Create account"}
+            {mode === "login" ? "Login" : "Create account"}
           </h2>
 
-          <div ref={messageRef} className="min-h-[1.125rem] mb-2 text-sm"></div>
+          <div ref={messageRef} className="min-h-[1.125rem] mb-2 text-sm" />
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -159,17 +150,18 @@ export default function Page() {
               type="submit"
               className="w-full rounded-lg bg-indigo-500 px-4 py-2 text-sm font-medium hover:bg-indigo-400 focus:outline-none"
             >
-              {modeRef.current === "login" ? "Login" : "Create account"}
+              {mode === "login" ? "Login" : "Create account"}
             </button>
           </form>
 
           <div className="mt-4 text-sm text-neutral-400">
-            {modeRef.current === "login" ? (
+            {mode === "login" ? (
               <>
                 Don't have an account?{" "}
                 <button
                   onClick={() => setMode("register")}
                   className="text-indigo-300 hover:underline ml-1"
+                  style={{ float: "right" }}
                 >
                   Create one
                 </button>
@@ -180,6 +172,7 @@ export default function Page() {
                 <button
                   onClick={() => setMode("login")}
                   className="text-indigo-300 hover:underline ml-1"
+                  style={{ float: "right" }}
                 >
                   Login
                 </button>
