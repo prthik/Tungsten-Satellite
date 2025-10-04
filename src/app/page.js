@@ -4,7 +4,7 @@ import React from 'react';
 
 const Homepage = () => {
   return (
-    <div className="p-8 text-white">
+    <div className="min-h-screen bg-neutral-800 text-white p-8">
       <h1 className="text-4xl font-bold mb-8">Welcome!</h1>
       
       <div className="space-y-8">
