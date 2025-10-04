@@ -1,4 +1,4 @@
-<<<<<<< Updated upstream
+
 "use client";
 
 import "../globals.css";
@@ -11,15 +11,3 @@ export default function ReportsPage() {
     </div>
   );
 }
-=======
-import React from 'react';
-//import ExperimentForm from "./components/experimentform";
-
-export default function ReportsPage() {
-    return (
-    <main className="container">
-      
-    </main>
-    )
-}
->>>>>>> Stashed changes
