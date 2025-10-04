@@ -69,6 +69,46 @@ def create_table(cur: sqlite3.Cursor):
         created_at TEXT
     );
     """)
+
+    # Create modules (constant module types) table
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS modules (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT UNIQUE,
+        w INTEGER,
+        h INTEGER,
+        massKg REAL
+    );
+    """)
+
+    # Create payload_builder_items table linking payload_builders -> modules
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS payload_builder_items (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        payload_builder_id INTEGER,
+        module_id INTEGER,
+        x INTEGER,
+        y INTEGER,
+        label TEXT,
+        massKg REAL,
+        FOREIGN KEY(payload_builder_id) REFERENCES payload_builders(id),
+        FOREIGN KEY(module_id) REFERENCES modules(id)
+    );
+    """)
+
+    # Seed modules if empty
+    cur.execute("SELECT COUNT(*) as cnt FROM modules")
+    r = cur.fetchone()
+    cnt = r[0] if r else 0
+    if cnt == 0:
+        seed = [
+            ('Camera', 2, 2, 3.2),
+            ('µLab', 3, 2, 5.8),
+            ('Comms', 2, 1, 1.1),
+            ('Battery', 1, 2, 2.4),
+            ('AI Module', 2, 2, 2.7),
+        ]
+        cur.executemany('INSERT INTO modules (name, w, h, massKg) VALUES (?, ?, ?, ?)', seed)
     
 
 @with_db_session
@@ -128,7 +168,7 @@ def save_experiment_file(cur: sqlite3.Cursor, experimentfile: ExperimentFileData
 @with_db_session
 def get_all_experiments(cur: sqlite3.Cursor):
     # Fetch experiments
-    cur.execute("SELECT id, user_id, name, description, status FROM experiments ORDER BY id DESC")
+    cur.execute("SELECT id, user_id, name, description, status, payload FROM experiments ORDER BY id DESC")
     ex_rows = cur.fetchall()
     results = []
     for ex in ex_rows:
@@ -164,6 +204,18 @@ def get_all_payload_builders(cur: sqlite3.Cursor):
     cur.execute("SELECT id, name, bay_width, bay_height, items_json, created_at FROM payload_builders ORDER BY id DESC")
     rows = cur.fetchall()
     return [dict(r) for r in rows]
+
+
+@with_db_session
+def get_modules(cur: sqlite3.Cursor):
+    cur.execute('SELECT id, name, w, h, massKg FROM modules ORDER BY id')
+    return [dict(r) for r in cur.fetchall()]
+
+
+@with_db_session
+def get_payload_builder_items(cur: sqlite3.Cursor, builder_id: int):
+    cur.execute('SELECT id, payload_builder_id, module_id, x, y, label, massKg FROM payload_builder_items WHERE payload_builder_id = ? ORDER BY id', (builder_id,))
+    return [dict(r) for r in cur.fetchall()]
 
 if __name__ == '__main__': 
     create_table()

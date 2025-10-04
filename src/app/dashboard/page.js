@@ -4,8 +4,8 @@
 
 import "../globals.css";
 import { useEffect, useMemo, useRef, useState } from "react";
-
 import Card, { Header, Badge, RequestForm, SubscriptionCard, ExperimentCard, RequestsTable, PayloadBuilder } from "../../../components/card";
+import ExperimentForm from "../experiments/components/experimentform";
 
 // DASHBOARD PAGE
 // Drop this file at: src/app/dashboard/page.js (or app/dashboard/page.js)
@@ -289,6 +289,10 @@ export default function DashboardPage() {
             files={experimentFiles}
             setFiles={setExperimentFiles}
           />
+          {/* Also render the full ExperimentForm on Dashboard for quick access */}
+          <div className="mt-6">
+            <ExperimentForm />
+          </div>
         </section>
         <section className="w-full">
           <PayloadBuilder
