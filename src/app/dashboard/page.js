@@ -4,8 +4,8 @@
 
 import "../globals.css";
 import { useEffect, useMemo, useRef, useState } from "react";
-import Card, { Header, Badge, RequestForm, RequestsTable, PayloadBuilder } from "../../../components/card";
-import Card, { Header, Badge, RequestForm, SubscriptionCard, ExperimentCard, RequestsTable } from "../../../components/card";
+
+import Card, { Header, Badge, RequestForm, SubscriptionCard, ExperimentCard, RequestsTable, PayloadBuilder } from "../../../components/card";
 
 // DASHBOARD PAGE
 // Drop this file at: src/app/dashboard/page.js (or app/dashboard/page.js)
@@ -13,11 +13,62 @@ import Card, { Header, Badge, RequestForm, SubscriptionCard, ExperimentCard, Req
 // If you don't use Tailwind, the layout still works with minimal inline styles.
 
 export default function DashboardPage() {
+  // --- Request Form State ---
+
+
+  // --- Request Form State ---
+  const [form, setForm] = useState({
+    material: "",
+    amount: "",
+    unit: "g",
+    priority: "Normal",
+    notes: "",
+  });
+  const [experiment, setExperiment] = useState({
+    experimentName: "",
+    description: "",
+    experimentType: "",
+    ModulesNeeded: ""
+  });
+  const [experimentFiles, setExperimentFiles] = useState([]);
+
+  // Helper: check if all fields are filled for both forms
+  const allRequestFieldsFilled = form.material && form.amount && form.unit && form.priority;
+  const allExperimentFieldsFilled = experiment.experimentName && experiment.description && experiment.experimentType && experiment.ModulesNeeded;
+  const canSubmit = allRequestFieldsFilled && allExperimentFieldsFilled;
+
+  function handleCombinedSubmit(e) {
+    e.preventDefault();
+    if (!canSubmit) return;
+    handleFormSubmit(e);
+    handleExperimentSubmit(e);
+  }
+  // (removed duplicate experiment state)
+
+  function handleExperimentChange(next) {
+    setExperiment(next);
+  }
+
+  function handleExperimentSubmit(e) {
+    e.preventDefault();
+    // For demo: just alert and reset
+    if (!experiment.experimentName || !experiment.description) {
+      alert("Experiment Name and Description required");
+      return;
+    }
+    alert("Experiment Created!\n" + JSON.stringify(experiment, null, 2));
+    setExperiment({ experimentName: "", description: "", experimentType: "", ModulesNeeded: "" });
+    setExperimentFiles([]);
+  }
+
   // --- Payload Builder State (must be first for logic below) ---
   const [bayWidth, setBayWidth] = useState(8); // grid columns
   const [bayHeight, setBayHeight] = useState(5); // grid rows
   const [payloadItems, setPayloadItems] = useState([]); // { id, w, h, x, y, label, massKg }
   const [selectedId, setSelectedId] = useState(null);
+
+  // Derived value: is any payload item selected?
+  const showSelected = !!selectedId;
 
   // --- Payload Builder Presentational Props ---
   const payloadPresets = [
@@ -67,15 +118,8 @@ export default function DashboardPage() {
 
   // These must come after payloadItems is declared
   const selectedLabel = payloadItems.find((p) => p.id === selectedId)?.label;
-  const showSelected = !!selectedId;
-  // --- Request Form State ---
-  const [form, setForm] = useState({
-    material: "",
-    amount: "",
-    unit: "g",
-    priority: "Normal",
-    notes: "",
-  });
+  // ...existing code...
+  // (removed duplicate form state)
   const cost = useMemo(() => estimateRequestCost({ amount: form.amount, priority: form.priority }), [form.amount, form.priority]);
 
   function handleFormChange(next) {
@@ -228,42 +272,54 @@ export default function DashboardPage() {
   }, [selectedId, bayWidth, bayHeight, payloadItems]);
 
   return (
-    <div className="min-h-screen bg-neutral-800 text-white">
-      <div className="mx-auto max-w-7xl px-4 py-8">
+    <div className="min-h-screen bg-neutral-800 text-white p-8">
+      <div className="space-y-8">
         <Header tier={tier} credits={credits} onBuy={() => buyCredits(200)} onChangeTier={changeTier} />
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 min-h-[600px]">
-          {/* LEFT: Requests Form + Recent Requests */}
-          <section className="lg:col-span-1 space-y-6 pt-6 flex flex-col">
-            <RequestForm
-              form={form}
-              onFormChange={handleFormChange}
-              onSubmit={handleFormSubmit}
-              cost={cost}
-            />
-            <RequestsTable requests={requests} onCancel={cancelRequest} />
-          </section>
-          {/* RIGHT: Payload Builder only */}
-          <section className="lg:col-span-2 flex flex-col gap-6 pt-6 h-full">
-            <PayloadBuilder
-              bayWidth={bayWidth}
-              bayHeight={bayHeight}
-              onBayWidthChange={handleBayWidthChange}
-              onBayHeightChange={handleBayHeightChange}
-              items={payloadItems}
-              selectedId={selectedId}
-              onCellClick={handleCellClick}
-              onGridClick={handleGridClick}
-              presets={payloadPresets}
-              onAddPreset={handleAddPreset}
-              usedCells={usedCells}
-              capacityCells={capacityCells}
-              massKg={massKg}
-              showSelected={showSelected}
-              selectedLabel={selectedLabel}
-              onMoveSelected={handleMoveSelected}
-              onRemoveSelected={handleRemoveSelected}
-            />
-          </section>
+        <section className="w-full flex flex-col gap-8">
+          <RequestForm
+            form={form}
+            onFormChange={handleFormChange}
+            onSubmit={handleFormSubmit}
+            cost={cost}
+          />
+          <ExperimentCard
+            experiment={experiment}
+            onExperimentChange={handleExperimentChange}
+            onExperimentSubmit={handleExperimentSubmit}
+            files={experimentFiles}
+            setFiles={setExperimentFiles}
+          />
+        </section>
+        <section className="w-full">
+          <PayloadBuilder
+            bayWidth={bayWidth}
+            bayHeight={bayHeight}
+            onBayWidthChange={handleBayWidthChange}
+            onBayHeightChange={handleBayHeightChange}
+            items={payloadItems}
+            selectedId={selectedId}
+            onCellClick={handleCellClick}
+            onGridClick={handleGridClick}
+            presets={payloadPresets}
+            onAddPreset={handleAddPreset}
+            usedCells={usedCells}
+            capacityCells={capacityCells}
+            massKg={massKg}
+            showSelected={showSelected}
+            selectedLabel={selectedLabel}
+            onMoveSelected={handleMoveSelected}
+            onRemoveSelected={handleRemoveSelected}
+          />
+        </section>
+        {/* Unified submit button at the end */}
+        <div className="w-full flex justify-end pt-8">
+          <button
+            className={`bg-blue-600 text-white py-2 px-6 rounded hover:bg-blue-700 transition text-lg font-semibold ${!canSubmit ? 'opacity-50 cursor-not-allowed' : ''}`}
+            onClick={handleCombinedSubmit}
+            disabled={!canSubmit}
+          >
+            Submit All Requests
+          </button>
         </div>
       </div>
     </div>
