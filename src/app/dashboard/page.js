@@ -1,5 +1,7 @@
+
 "use client";
 
+import "../globals.css";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Card, { Header, Badge, RequestForm, SubscriptionCard, RequestsTable } from "../../../components/card";
 

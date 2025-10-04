@@ -1,22 +1,13 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --background: #18181b; /* matches bg-neutral-800 */
+  --foreground: #fff;    /* matches text-white */
+  --card-bg: #18181b;    /* bg-neutral-800 for cards */
+  --card-border: #737373; /* border-neutral-500 */
+  --card-title: #a3a3a3;  /* text-neutral-500 */
+  --card-subtitle: #d4d4d4; /* text-neutral-400 */
+  --font-mono: var(--font-mono), 'Space Mono', 'Menlo', 'Monaco', 'Consolas', monospace;
 }
 
 /* globals.css */
@@ -27,5 +18,5 @@ html, body {
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-mono), monospace;
+  font-family: var(--font-mono), 'Space Mono', 'Menlo', 'Monaco', 'Consolas', monospace;
 }

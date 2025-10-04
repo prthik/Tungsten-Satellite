@@ -1,3 +1,5 @@
+"use client";
+
 export default function Card({ title, subtitle, number, children }) {
   return (
     <div className="bg-neutral-950 p-6 rounded-lg border border-neutral-500 flex flex-col">

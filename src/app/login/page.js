@@ -1,5 +1,5 @@
-// src/app/login/page.js
-"use client";
+import "../globals.css";
+("use client");
 
 import React, { useRef } from "react";
 import { useRouter } from "next/navigation";
