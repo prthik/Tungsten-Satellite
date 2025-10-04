@@ -8,7 +8,10 @@ export default function Sidebar() {
                     <Link href={"/"}>Home</Link>
                 </div>
                 <div className="hover:underline cursor-pointer">
-                    <Link href={"/data"}> Data</Link>
+                    <Link href={"/dashboard"}> Dashboard</Link>
+                </div>
+                <div className="hover:underline cursor-pointer">
+                    <Link href={"/reports"}> Reports</Link>
                 </div>
                 
             </div>
