@@ -6,12 +6,13 @@ class UserData:
     api_key_hash: bytes
     credits: int
 
-
+@dataclass
 class ExperimentData: 
     user_id: int
     description: str
     status: str
 
+@dataclass
 class ExperimentFileData: 
     experiment_id: int
     filename: str
