@@ -1,6 +1,6 @@
-import "../globals.css";
-("use client");
+"use client";
 
+import "../globals.css";
 import React, { useRef } from "react";
 import { useRouter } from "next/navigation";
 import { auth } from "../../lib/firebaseClient"; // <-- keep this if firebaseClient is at src/lib
