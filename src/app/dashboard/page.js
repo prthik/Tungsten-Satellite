@@ -3,7 +3,7 @@
 
 import "../globals.css";
 import { useEffect, useMemo, useRef, useState } from "react";
-import Card, { Header, Badge, RequestForm, SubscriptionCard, RequestsTable } from "../../../components/card";
+import Card, { Header, Badge, RequestForm, SubscriptionCard, ExperimentCard, RequestsTable } from "../../../components/card";
 
 // DASHBOARD PAGE
 // Drop this file at: src/app/dashboard/page.js (or app/dashboard/page.js)
@@ -166,7 +166,8 @@ export default function DashboardPage() {
           {/* LEFT: Requests & Subscription */}
           <section className="lg:col-span-1 space-y-6">
             <RequestForm onSubmit={addRequest} estimateCost={estimateRequestCost} />
-            <SubscriptionCard tier={tier} onChangeTier={changeTier} />
+            <SubscriptionCard tier={tier} on  ChangeTier={changeTier} />
+            <ExperimentCard />
           </section>
 
           {/* RIGHT: Payload Builder + Requests List */}
