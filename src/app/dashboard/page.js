@@ -158,7 +158,7 @@ export default function DashboardPage() {
   }, [selectedId, bayWidth, bayHeight, payloadItems]);
 
   return (
-    <main className="min-h-screen bg-neutral-900 text-white">
+    <div className="min-h-screen bg-neutral-800 text-white">
       <div className="mx-auto max-w-7xl px-4 py-8">
   <Header tier={tier} credits={credits} onBuy={() => buyCredits(200)} />
 
@@ -190,7 +190,7 @@ export default function DashboardPage() {
           </section>
         </div>
       </div>
-    </main>
+  </div>
   );
 }
 

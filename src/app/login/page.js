@@ -1,6 +1,7 @@
-"use client";
 
+"use client";
 import "../globals.css";
+
 import React, { useRef } from "react";
 import { useRouter } from "next/navigation";
 import { auth } from "../../lib/firebaseClient"; // <-- keep this if firebaseClient is at src/lib
@@ -95,7 +96,7 @@ export default function Page() {
 
   return (
     <div
-      className="min-h-screen bg-neutral-950 flex items-start justify-center py-12 px-4"
+      className="min-h-screen bg-neutral-800 text-white flex items-start justify-center py-12 px-4"
       style={{
         display: "flex",
         justifyContent: "center",
