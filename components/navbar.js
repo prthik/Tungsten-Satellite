@@ -5,11 +5,12 @@ import Link from "next/link";
 // Adjust this path if your file is elsewhere:
 import { auth } from "../src/lib/firebaseClient";
 import { onAuthStateChanged, signOut } from "firebase/auth";
-
+import { useRouter } from "next/navigation";
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [user, setUser] = useState(null); // null => signed out, object => signed in
   const ref = useRef(null);
+  const router = useRouter();
 
   // subscribe to firebase auth state
   useEffect(() => {
@@ -40,6 +41,7 @@ export default function Navbar() {
     try {
       await signOut(auth);
       setOpen(false);
+      router.push("/"); // navigates to home, keeps history
       // firebase will call onAuthStateChanged -> setUser(null)
     } catch (err) {
       console.error("Sign-out failed", err);
@@ -112,14 +114,6 @@ export default function Navbar() {
                       onClick={() => setOpen(false)}
                     >
                       Profile
-                    </Link>
-                    <Link
-                      href="/dashboard"
-                      role="menuitem"
-                      className="block px-4 py-2 text-sm text-neutral-900 hover:bg-neutral-100"
-                      onClick={() => setOpen(false)}
-                    >
-                      Dashboard
                     </Link>
 
                     <button
