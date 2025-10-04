@@ -1,9 +1,11 @@
 
 "use client";
 
+
 import "../globals.css";
 import { useEffect, useMemo, useRef, useState } from "react";
-import Card, { Header, Badge, RequestForm, SubscriptionCard, ExperimentCard, RequestsTable } from "../../../components/card";
+
+import Card, { Header, Badge, RequestForm, SubscriptionCard, ExperimentCard, RequestsTable, PayloadBuilder } from "../../../components/card";
 
 // DASHBOARD PAGE
 // Drop this file at: src/app/dashboard/page.js (or app/dashboard/page.js)
@@ -11,16 +13,128 @@ import Card, { Header, Badge, RequestForm, SubscriptionCard, ExperimentCard, Req
 // If you don't use Tailwind, the layout still works with minimal inline styles.
 
 export default function DashboardPage() {
-  // --- Demo State (persisted to localStorage) ---
-  const [credits, setCredits] = useState(250); // demo starting credits
-  const [tier, setTier] = useState("Student"); // Student | Academic | Enterprise
-  const [requests, setRequests] = useState([]); // { id, material, amount, unit, priority, notes, status }
+  // --- Request Form State ---
 
-  // Payload builder state
+
+  // --- Request Form State ---
+  const [form, setForm] = useState({
+    material: "",
+    amount: "",
+    unit: "g",
+    priority: "Normal",
+    notes: "",
+  });
+  const [experiment, setExperiment] = useState({
+    experimentName: "",
+    description: "",
+    experimentType: "",
+    ModulesNeeded: ""
+  });
+  const [experimentFiles, setExperimentFiles] = useState([]);
+
+  // Helper: check if all fields are filled for both forms
+  const allRequestFieldsFilled = form.material && form.amount && form.unit && form.priority;
+  const allExperimentFieldsFilled = experiment.experimentName && experiment.description && experiment.experimentType && experiment.ModulesNeeded;
+  const canSubmit = allRequestFieldsFilled && allExperimentFieldsFilled;
+
+  function handleCombinedSubmit(e) {
+    e.preventDefault();
+    if (!canSubmit) return;
+    handleFormSubmit(e);
+    handleExperimentSubmit(e);
+  }
+  // (removed duplicate experiment state)
+
+  function handleExperimentChange(next) {
+    setExperiment(next);
+  }
+
+  function handleExperimentSubmit(e) {
+    e.preventDefault();
+    // For demo: just alert and reset
+    if (!experiment.experimentName || !experiment.description) {
+      alert("Experiment Name and Description required");
+      return;
+    }
+    alert("Experiment Created!\n" + JSON.stringify(experiment, null, 2));
+    setExperiment({ experimentName: "", description: "", experimentType: "", ModulesNeeded: "" });
+    setExperimentFiles([]);
+  }
+
+  // --- Payload Builder State (must be first for logic below) ---
   const [bayWidth, setBayWidth] = useState(8); // grid columns
   const [bayHeight, setBayHeight] = useState(5); // grid rows
   const [payloadItems, setPayloadItems] = useState([]); // { id, w, h, x, y, label, massKg }
   const [selectedId, setSelectedId] = useState(null);
+
+  // Derived value: is any payload item selected?
+  const showSelected = !!selectedId;
+
+  // --- Payload Builder Presentational Props ---
+  const payloadPresets = [
+    { label: "Camera", w: 2, h: 2, massKg: 3.2 },
+    { label: "µLab", w: 3, h: 2, massKg: 5.8 },
+    { label: "Comms", w: 2, h: 1, massKg: 1.1 },
+    { label: "Battery", w: 1, h: 2, massKg: 2.4 },
+    { label: "AI Module", w: 2, h: 2, massKg: 2.7 },
+  ];
+
+  function handleBayWidthChange(e) {
+    setBayWidth(Number(e.target.value));
+  }
+  function handleBayHeightChange(e) {
+    setBayHeight(Number(e.target.value));
+  }
+  function handleAddPreset(preset) {
+    addPayloadPreset(preset);
+  }
+  function handleGridClick(e) {
+    if (e.target.classList.contains("aspect-[2/1]")) setSelectedId(null);
+  }
+  function handleCellClick(x, y) {
+    const found = [...payloadItems].reverse().find((p) => x >= p.x && x < p.x + p.w && y >= p.y && y < p.y + p.h);
+    setSelectedId(found?.id ?? null);
+  }
+  function handleMoveSelected(dx, dy) {
+    if (!selectedId) return;
+    setPayloadItems((ps) => {
+      return ps.map((p) => {
+        if (p.id !== selectedId) return p;
+        let nx = Math.max(0, Math.min(bayWidth - p.w, p.x + dx));
+        let ny = Math.max(0, Math.min(bayHeight - p.h, p.y + dy));
+        // Check collision with others
+        const others = ps.filter((o) => o.id !== p.id);
+        const blocked = others.some((o) => rectsOverlap(nx, ny, p.w, p.h, o.x, o.y, o.w, o.h));
+        if (blocked) return p; // ignore move if blocked
+        return { ...p, x: nx, y: ny };
+      });
+    });
+  }
+  function handleRemoveSelected() {
+    if (!selectedId) return;
+    setPayloadItems((ps) => ps.filter((p) => p.id !== selectedId));
+    setSelectedId(null);
+  }
+
+  // These must come after payloadItems is declared
+  const selectedLabel = payloadItems.find((p) => p.id === selectedId)?.label;
+  // ...existing code...
+  // (removed duplicate form state)
+  const cost = useMemo(() => estimateRequestCost({ amount: form.amount, priority: form.priority }), [form.amount, form.priority]);
+
+  function handleFormChange(next) {
+    setForm(next);
+  }
+  function handleFormSubmit(e) {
+    e.preventDefault();
+    if (!form.material || !form.amount) return alert("Material and amount required");
+    addRequest(form);
+    setForm({ material: "", amount: "", unit: "g", priority: "Normal", notes: "" });
+  }
+  // --- Demo State (persisted to localStorage) ---
+  const [credits, setCredits] = useState(250); // demo starting credits
+  const [tier, setTier] = useState("Student"); // Student | Academic | Enterprise
+  const [requests, setRequests] = useState([]); // { id, material, amount, unit, priority, notes, status }
 
   // --- Persistence ---
   useEffect(() => {
@@ -158,167 +272,61 @@ export default function DashboardPage() {
   }, [selectedId, bayWidth, bayHeight, payloadItems]);
 
   return (
-    <div className="min-h-screen bg-neutral-800 text-white">
-      <div className="mx-auto max-w-7xl px-4 py-8">
-  <Header tier={tier} credits={credits} onBuy={() => buyCredits(200)} />
-
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          {/* LEFT: Requests & Subscription */}
-          <section className="lg:col-span-1 space-y-6">
-            <RequestForm onSubmit={addRequest} estimateCost={estimateRequestCost} />
-            <SubscriptionCard tier={tier} on  ChangeTier={changeTier} />
-            <ExperimentCard />
-          </section>
-
-          {/* RIGHT: Payload Builder + Requests List */}
-          <section className="lg:col-span-2 space-y-6">
-            <PayloadBuilder
-              bayWidth={bayWidth}
-              bayHeight={bayHeight}
-              setBayWidth={setBayWidth}
-              setBayHeight={setBayHeight}
-              items={payloadItems}
-              setItems={setPayloadItems}
-              selectedId={selectedId}
-              setSelectedId={setSelectedId}
-              addPreset={addPayloadPreset}
-              usedCells={usedCells}
-              capacityCells={capacityCells}
-              massKg={massKg}
-            />
-
-            <RequestsTable requests={requests} onCancel={cancelRequest} />
-          </section>
-        </div>
-      </div>
-  </div>
-  );
-}
-
-
-function PayloadBuilder({
-  bayWidth,
-  bayHeight,
-  setBayWidth,
-  setBayHeight,
-  items,
-  setItems,
-  selectedId,
-  setSelectedId,
-  addPreset,
-  usedCells,
-  capacityCells,
-  massKg,
-}) {
-  const gridRef = useRef(null);
-
-  function onGridClick(e) {
-    // Deselect if empty space
-    if (e.target === gridRef.current) setSelectedId(null);
-  }
-
-  function clickCell(x, y) {
-    // Select the top-most module at this cell
-    const found = [...items].reverse().find((p) => x >= p.x && x < p.x + p.w && y >= p.y && y < p.y + p.h);
-    setSelectedId(found?.id ?? null);
-  }
-
-  const presets = [
-    { label: "Camera", w: 2, h: 2, massKg: 3.2 },
-    { label: "µLab", w: 3, h: 2, massKg: 5.8 },
-    { label: "Comms", w: 2, h: 1, massKg: 1.1 },
-    { label: "Battery", w: 1, h: 2, massKg: 2.4 },
-    { label: "AI Module", w: 2, h: 2, massKg: 2.7 },
-  ];
-
-  return (
-    <div className="rounded-2xl border border-neutral-800 bg-neutral-800/60 p-5">
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-lg font-semibold">Payload Builder</h2>
-        <div className="text-sm text-neutral-300">
-          Used {usedCells}/{capacityCells} cells · Mass {massKg.toFixed(1)} kg
-        </div>
-      </div>
-
-      <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-[280px,1fr]">
-        {/* Presets */}
-        <div className="rounded-xl border border-neutral-800 bg-neutral-900 p-3">
-          <p className="mb-2 text-sm font-medium">Modules</p>
-          <div className="flex flex-wrap gap-2">
-            {presets.map((p) => (
-              <button
-                key={p.label}
-                onClick={() => addPreset(p)}
-                className="rounded-xl border border-neutral-700 bg-neutral-800 px-3 py-2 text-xs hover:border-neutral-600"
-                title={`${p.w}x${p.h} · ${p.massKg} kg`}
-              >
-                {p.label}
-              </button>
-            ))}
-          </div>
-
-          <div className="mt-4">
-            <p className="mb-2 text-sm font-medium">Bay Size (U grid)</p>
-            <div className="flex items-center gap-2">
-              <label className="text-xs text-neutral-300">W</label>
-              <input
-                type="number"
-                min={3}
-                max={12}
-                value={bayWidth}
-                onChange={(e) => setBayWidth(Number(e.target.value))}
-                className="w-16 rounded-lg border border-neutral-700 bg-neutral-900 px-2 py-1 text-sm"
-              />
-              <label className="text-xs text-neutral-300">H</label>
-              <input
-                type="number"
-                min={3}
-                max={12}
-                value={bayHeight}
-                onChange={(e) => setBayHeight(Number(e.target.value))}
-                className="w-16 rounded-lg border border-neutral-700 bg-neutral-900 px-2 py-1 text-sm"
-              />
-            </div>
-          </div>
-
-          <div className="mt-4 space-y-2 text-xs text-neutral-400">
-            <p>Tip: Click cells to select a module. Use arrow keys to move; Delete to remove.</p>
-          </div>
-        </div>
-
-        {/* Grid */}
-        <div>
-          <div
-            ref={gridRef}
-            onClick={onGridClick}
-            className="relative aspect-[2/1] w-full select-none overflow-hidden rounded-xl border border-neutral-800 bg-neutral-900 p-2"
+    <div className="min-h-screen bg-neutral-800 text-white p-8">
+      <div className="space-y-8">
+        <Header tier={tier} credits={credits} onBuy={() => buyCredits(200)} onChangeTier={changeTier} />
+        <section className="w-full flex flex-col gap-8">
+          <RequestForm
+            form={form}
+            onFormChange={handleFormChange}
+            onSubmit={handleFormSubmit}
+            cost={cost}
+          />
+          <ExperimentCard
+            experiment={experiment}
+            onExperimentChange={handleExperimentChange}
+            onExperimentSubmit={handleExperimentSubmit}
+            files={experimentFiles}
+            setFiles={setExperimentFiles}
+          />
+        </section>
+        <section className="w-full">
+          <PayloadBuilder
+            bayWidth={bayWidth}
+            bayHeight={bayHeight}
+            onBayWidthChange={handleBayWidthChange}
+            onBayHeightChange={handleBayHeightChange}
+            items={payloadItems}
+            selectedId={selectedId}
+            onCellClick={handleCellClick}
+            onGridClick={handleGridClick}
+            presets={payloadPresets}
+            onAddPreset={handleAddPreset}
+            usedCells={usedCells}
+            capacityCells={capacityCells}
+            massKg={massKg}
+            showSelected={showSelected}
+            selectedLabel={selectedLabel}
+            onMoveSelected={handleMoveSelected}
+            onRemoveSelected={handleRemoveSelected}
+          />
+        </section>
+        {/* Unified submit button at the end */}
+        <div className="w-full flex justify-end pt-8">
+          <button
+            className={`bg-blue-600 text-white py-2 px-6 rounded hover:bg-blue-700 transition text-lg font-semibold ${!canSubmit ? 'opacity-50 cursor-not-allowed' : ''}`}
+            onClick={handleCombinedSubmit}
+            disabled={!canSubmit}
           >
-            <Grid
-              W={bayWidth}
-              H={bayHeight}
-              items={items}
-              onCellClick={clickCell}
-              selectedId={selectedId}
-            />
-          </div>
+            Submit All Requests
+          </button>
         </div>
       </div>
-
-      {selectedId && (
-        <div className="flex items-center justify-between rounded-xl border border-neutral-800 bg-neutral-900 p-3 text-sm">
-          <span className="text-neutral-300">Selected: {items.find((p) => p.id === selectedId)?.label}</span>
-          <div className="flex items-center gap-2">
-            <button onClick={() => moveItems(setItems, selectedId, 0, -1, bayWidth, bayHeight)} className="rounded-lg border border-neutral-700 px-3 py-1">↑</button>
-            <button onClick={() => moveItems(setItems, selectedId, 0, 1, bayWidth, bayHeight)} className="rounded-lg border border-neutral-700 px-3 py-1">↓</button>
-            <button onClick={() => moveItems(setItems, selectedId, -1, 0, bayWidth, bayHeight)} className="rounded-lg border border-neutral-700 px-3 py-1">←</button>
-            <button onClick={() => moveItems(setItems, selectedId, 1, 0, bayWidth, bayHeight)} className="rounded-lg border border-neutral-700 px-3 py-1">→</button>
-            <button onClick={() => removeItem(setItems, selectedId)} className="rounded-lg border border-rose-700 bg-rose-900/30 px-3 py-1 hover:border-rose-600">Remove</button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
+
+
 
 function moveItems(setItems, selectedId, dx, dy, W, H) {
   setItems((ps) =>
@@ -338,49 +346,3 @@ function removeItem(setItems, id) {
   setItems((ps) => ps.filter((p) => p.id !== id));
 }
 
-function Grid({ W, H, items, onCellClick, selectedId }) {
-  // Render background grid cells
-  const cells = [];
-  for (let y = 0; y < H; y++) {
-    for (let x = 0; x < W; x++) {
-      const key = `${x}:${y}`;
-      cells.push(
-        <div
-          key={key}
-          className="relative border border-neutral-800/70"
-          onClick={(e) => {
-            e.stopPropagation();
-            onCellClick(x, y);
-          }}
-        />
-      );
-    }
-  }
-
-  return (
-    <div
-      className="grid h-full w-full"
-      style={{ gridTemplateColumns: `repeat(${W}, minmax(0, 1fr))`, gridTemplateRows: `repeat(${H}, minmax(0, 1fr))` }}
-    >
-      {cells}
-      {items.map((p) => (
-        <div
-          key={p.id}
-          style={{
-            gridColumn: `${p.x + 1} / span ${p.w}`,
-            gridRow: `${p.y + 1} / span ${p.h}`,
-          }}
-          className={`relative m-[2px] flex items-center justify-center rounded-lg border text-xs ${
-            selectedId === p.id
-              ? "border-emerald-500 bg-emerald-500/20"
-              : "border-neutral-600 bg-neutral-700/60 hover:border-neutral-500"
-          }`}
-        >
-          <span className="pointer-events-none select-none px-2 text-center text-xs text-white/90">
-            {p.label}\n{p.w}x{p.h} · {p.massKg} kg
-          </span>
-        </div>
-      ))}
-    </div>
-  );
-}
