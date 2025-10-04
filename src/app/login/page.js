@@ -1,4 +1,5 @@
-// app/login/page.js
+
+import "../globals.css";
 "use client";
 
 import React, { useRef } from "react";
