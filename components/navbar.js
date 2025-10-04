@@ -59,9 +59,7 @@ export default function Navbar() {
       </div>
 
       <div style={{ display: "flex", gap: "20px" }}>
-        <div className="hover:underline cursor-pointer">
-          <Link href={"/alerts"}>Alerts</Link>
-        </div>
+
 
         {/* Profile dropdown */}
         <div ref={ref} className="relative inline-block text-left">
@@ -70,9 +68,9 @@ export default function Navbar() {
             aria-haspopup="true"
             aria-expanded={open}
             onClick={() => setOpen((s) => !s)}
-            className="flex items-center gap-2 px-3 py-1 rounded hover:bg-neutral-800 focus:outline-none focus:ring-2 focus:ring-sky-500"
+            className="flex items-center gap-2 px-3 py-1 rounded hover:bg-neutral-800 focus:outline-none focus:ring-2 focus:ring-sky-500 text-sm"
           >
-            <span className="hover:underline cursor-pointer select-none text-sm">
+            <span className="hover:underline cursor-pointer select-none">
               {label}
             </span>
             <svg
