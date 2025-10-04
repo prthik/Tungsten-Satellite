@@ -36,7 +36,8 @@ def create_table(cur: sqlite3.Cursor):
         user_id INTEGER, 
         name TEXT, 
         description TEXT,
-        status TEXT, 
+        status TEXT,
+        payload TEXT,
         FOREIGN KEY(user_id) REFERENCES users(id)
     );
     """)
@@ -50,6 +51,23 @@ def create_table(cur: sqlite3.Cursor):
         FOREIGN KEY(experiment_id) REFERENCES experiments(id)
     );
 
+    """)
+    # Ensure payload column exists (SQLite doesn't have ALTER ... IF NOT EXISTS)
+    cur.execute("PRAGMA table_info(experiments)")
+    cols = [r['name'] for r in cur.fetchall()]
+    if 'payload' not in cols:
+        cur.execute("ALTER TABLE experiments ADD COLUMN payload TEXT;")
+
+    # Create payload_builders table if missing
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS payload_builders (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT,
+        bay_width INTEGER,
+        bay_height INTEGER,
+        items_json TEXT,
+        created_at TEXT
+    );
     """)
     
 
@@ -85,12 +103,13 @@ def save_experiment(cur: sqlite3.Cursor, experimentdata: ExperimentData):
         return "Invalid Data"
     cur.execute(f"""
         INSERT INTO experiments
-        (user_id, description, status)
+        (user_id, name, description, status, payload)
         VALUES
-        (:user_id, :description, :status);
+        (:user_id, :name, :description, :status, :payload);
 
     """, asdict(experimentdata)
     )
+    return cur.lastrowid
 
 @with_db_session
 def save_experiment_file(cur: sqlite3.Cursor, experimentfile: ExperimentFileData):
@@ -100,10 +119,51 @@ def save_experiment_file(cur: sqlite3.Cursor, experimentfile: ExperimentFileData
         INSERT INTO experiment_files
         (experiment_id, filename, file_data)
         VALUES
-        (:experiment_id, filename, file_data);
+        (:experiment_id, :filename, :file_data);
 
     """, asdict(experimentfile)
     )
+
+
+@with_db_session
+def get_all_experiments(cur: sqlite3.Cursor):
+    # Fetch experiments
+    cur.execute("SELECT id, user_id, name, description, status FROM experiments ORDER BY id DESC")
+    ex_rows = cur.fetchall()
+    results = []
+    for ex in ex_rows:
+        ex_id = ex['id']
+        cur.execute("SELECT id, filename, length(file_data) as size FROM experiment_files WHERE experiment_id = ?", (ex_id,))
+        files = [dict(row) for row in cur.fetchall()]
+        results.append({
+            'id': ex_id,
+            'user_id': ex['user_id'],
+            'name': ex['name'],
+            'description': ex['description'],
+            'status': ex['status'],
+            'payload': ex['payload'],
+            'files': files
+        })
+    return results
+
+
+@with_db_session
+def save_payload_builder(cur: sqlite3.Cursor, builder: dict):
+    # builder: {name, bay_width, bay_height, items_json, created_at}
+    cur.execute("""
+        INSERT INTO payload_builders
+        (name, bay_width, bay_height, items_json, created_at)
+        VALUES
+        (:name, :bay_width, :bay_height, :items_json, :created_at);
+    """, builder)
+    return cur.lastrowid
+
+
+@with_db_session
+def get_all_payload_builders(cur: sqlite3.Cursor):
+    cur.execute("SELECT id, name, bay_width, bay_height, items_json, created_at FROM payload_builders ORDER BY id DESC")
+    rows = cur.fetchall()
+    return [dict(r) for r in rows]
 
 if __name__ == '__main__': 
     create_table()
