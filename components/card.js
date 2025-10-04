@@ -69,7 +69,7 @@ export function PayloadBuilder({
 }) {
   return (
     <Card title="Payload Builder" subtitle={`Used ${usedCells}/${capacityCells} cells · Mass ${massKg.toFixed(1)} kg`}>
-      <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-[280px,1fr]">
+      <div className="mb-4 w-full max-w-4xl mx-auto grid grid-cols-1 gap-4 md:grid-cols-[320px,1fr]">
         {/* Presets */}
         <div className="rounded-xl border border-neutral-800 bg-neutral-900 p-3">
           <p className="mb-2 text-sm font-medium">Modules</p>
@@ -226,7 +226,7 @@ export function Badge({ children }) {
 export function RequestForm({ form, onFormChange, onSubmit, cost }) {
   return (
     <Card title="Request Materials / Lab Time">
-      <form className="space-y-3" onSubmit={onSubmit}>
+      <form className="space-y-3" onSubmit={e => e.preventDefault()}>
         <div className="grid grid-cols-6 gap-3">
           <div className="col-span-3">
             <label className="block text-sm text-neutral-300">Material</label>
@@ -287,9 +287,6 @@ export function RequestForm({ form, onFormChange, onSubmit, cost }) {
         </div>
         <div className="flex items-center justify-between">
           <p className="text-sm text-neutral-300">Estimated cost: <span className="font-semibold text-white">{cost}</span> credits</p>
-          <button type="submit" className="rounded-lg bg-indigo-500 px-4 py-2 text-sm font-medium hover:bg-indigo-400 focus:outline-none">
-            Submit Request
-          </button>
         </div>
       </form>
     </Card>
@@ -405,38 +402,68 @@ function FileUpload({ MAX_FILES, MAX_SIZE_MB, files, setFiles }) {
     );
 }
 
-export function ExperimentCard() {
-    const MAX_FILES = 5;
-    const MAX_SIZE_MB = 10;
-    const [files, setFiles] = useState([]);
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        // Handle form submission logic here
-        alert('Experiment Created!');
-    }
-    return (
-      <Card title={"Request Experiments"} subtitle={"Enter required programming and experiment data. "}>
-        <form className="flex flex-col gap-4 max-w-md mx-auto" onSubmit={handleSubmit}>
-            <div className="flex flex-col">
-                <label htmlFor="experimentName" className="mb-2 font-semibold">Experiment Name</label>
-                <input type="text" id="experimentName" name="experimentName" className="p-2 border border-neutral-300 rounded" required />
-            </div>
-            <div className="flex flex-col">
-                <label htmlFor="description" className="mb-2 font-semibold">Description</label>
-                <textarea id="description" name="description" rows="4" className="p-2 border border-neutral-300 rounded" required></textarea>
-            </div>
-            <div className="flex flex-col">
-                <label htmlFor="experimentType" className="mb-2 font-semibold">Experiment Type</label>
-                <textarea id="experimentType" name="experimentType" rows="4" className="p-2 border border-neutral-300 rounded" required></textarea>
-            </div>
-            <div className="flex flex-col">
-                <label htmlFor="ModulesNeeded" className="mb-2 font-semibold">Modules Needed</label>
-                <textarea id="ModulesNeeded" name="ModulesNeeded" rows="4" className="p-2 border border-neutral-300 rounded" required></textarea>
-            </div>
-            
-            <FileUpload MAX_FILES={MAX_FILES} MAX_SIZE_MB={MAX_SIZE_MB} files={files} setFiles={setFiles} />
-            <button type="submit" className="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition">Create Experiment</button>
-        </form>
-        </Card>
-    )
+export function ExperimentCard({
+  experiment,
+  onExperimentChange,
+  onExperimentSubmit,
+  files,
+  setFiles,
+  maxFiles = 5,
+  maxSizeMB = 10
+}) {
+  return (
+    <Card title={"Request Experiments"} subtitle={"Enter required programming and experiment data. "}>
+      <form className="flex flex-col gap-4 w-full" onSubmit={e => e.preventDefault()}>
+        <div className="flex flex-col">
+          <label htmlFor="experimentName" className="mb-2 font-semibold">Experiment Name</label>
+          <input
+            type="text"
+            id="experimentName"
+            name="experimentName"
+            className="p-2 border border-neutral-300 rounded w-full"
+            required
+            value={experiment.experimentName}
+            onChange={e => onExperimentChange({ ...experiment, experimentName: e.target.value })}
+          />
+        </div>
+        <div className="flex flex-col">
+          <label htmlFor="description" className="mb-2 font-semibold">Description</label>
+          <textarea
+            id="description"
+            name="description"
+            rows="5"
+            className="p-2 border border-neutral-300 rounded w-full"
+            required
+            value={experiment.description}
+            onChange={e => onExperimentChange({ ...experiment, description: e.target.value })}
+          ></textarea>
+        </div>
+        <div className="flex flex-col">
+          <label htmlFor="experimentType" className="mb-2 font-semibold">Experiment Type</label>
+          <textarea
+            id="experimentType"
+            name="experimentType"
+            rows="3"
+            className="p-2 border border-neutral-300 rounded w-full"
+            required
+            value={experiment.experimentType}
+            onChange={e => onExperimentChange({ ...experiment, experimentType: e.target.value })}
+          ></textarea>
+        </div>
+        <div className="flex flex-col">
+          <label htmlFor="ModulesNeeded" className="mb-2 font-semibold">Modules Needed</label>
+          <textarea
+            id="ModulesNeeded"
+            name="ModulesNeeded"
+            rows="2"
+            className="p-2 border border-neutral-300 rounded w-full"
+            required
+            value={experiment.ModulesNeeded}
+            onChange={e => onExperimentChange({ ...experiment, ModulesNeeded: e.target.value })}
+          ></textarea>
+        </div>
+  <FileUpload MAX_FILES={maxFiles} MAX_SIZE_MB={maxSizeMB} files={files} setFiles={setFiles} />
+      </form>
+    </Card>
+  );
 }

@@ -7,22 +7,47 @@ import { auth } from "../src/lib/firebaseClient";
 import { onAuthStateChanged } from "firebase/auth";
 
 export default function Sidebar() {
-  // undefined = not yet known, null = signed out, object = signed in
+  // undefined = loading, null = signed out, object = signed in
   const [user, setUser] = useState(undefined);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  function adminKeyForUid(uid) {
+    return `isAdmin_${uid}`;
+  }
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (u) => {
-      setUser(u);
+      setUser(u || null);
+
+      if (u && typeof window !== "undefined") {
+        setIsAdmin(!!localStorage.getItem(adminKeyForUid(u.uid)));
+      } else {
+        setIsAdmin(false);
+      }
     });
     return () => unsub();
   }, []);
 
+  // update admin flag if changed in another tab/window
+  useEffect(() => {
+    function onStorage(e) {
+      if (!user || !e.key) return;
+      const expectedKey = adminKeyForUid(user.uid);
+      if (e.key === expectedKey) {
+        setIsAdmin(!!localStorage.getItem(expectedKey));
+      }
+    }
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, [user]);
+
   // while we don't know auth state, return null to avoid flicker.
-  // If you prefer a skeleton placeholder while loading, render it when user === undefined.
+  if (user === undefined) return null;
+  // not signed in -> hide sidebar
   if (!user) return null;
 
   return (
-    <div className="flex flex-col w-64 h-full border-r border-neutral-500 bg-neutral-900 shrink-0">
+    <div className="flex flex-col w-64 min-h-screen border-r border-neutral-500 bg-neutral-900 shrink-0">
       <div className="py-8 px-6 space-y-6">
         <div
           className="hover:underline cursor-pointer"
@@ -30,6 +55,7 @@ export default function Sidebar() {
             display: "flex",
             flexDirection: "row",
             gap: "8px",
+            alignItems: "center",
           }}
         >
           <svg
@@ -50,12 +76,14 @@ export default function Sidebar() {
           </svg>
           <Link href={"/"}>Home</Link>
         </div>
+
         <div
           className="hover:underline cursor-pointer"
           style={{
             display: "flex",
             flexDirection: "row",
             gap: "8px",
+            alignItems: "center",
           }}
         >
           <svg
@@ -77,11 +105,13 @@ export default function Sidebar() {
           </svg>
           <Link href={"/dashboard"}> Dashboard</Link>
         </div>
+
         <div
           style={{
             display: "flex",
             flexDirection: "row",
             gap: "8px",
+            alignItems: "center",
           }}
           className="hover:underline cursor-pointer"
         >
@@ -125,6 +155,42 @@ export default function Sidebar() {
           </svg>
           <Link href={"/reports"}> Reports</Link>
         </div>
+
+        {isAdmin && (
+          <>
+            <div className="mt-4 pt-4 border-t border-neutral-800 text-xs text-neutral-400">
+              Admin
+            </div>
+
+            <div
+              className="hover:underline cursor-pointer mt-2"
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                gap: "8px",
+                alignItems: "center",
+              }}
+            >
+              {/* simple shield icon for admin */}
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <title>Approvals</title>
+                <path d="M12 2l7 4v6c0 5-3 9-7 10-4-1-7-5-7-10V6l7-4z" />
+                <path d="M9.5 12.5l2 2 4-4" />
+              </svg>
+              <Link href={"/requests"}>Approvals</Link>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

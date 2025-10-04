@@ -4,7 +4,7 @@
 import React, { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Card from "../../../components/card";
-import { auth } from "../../lib/firebaseClient"; // ensure this path is correct
+import { auth } from "../../lib/firebaseClient";
 import {
   onAuthStateChanged,
   signOut,
@@ -14,14 +14,22 @@ import {
   deleteUser,
 } from "firebase/auth";
 
+/**
+ * NOTE (prototype): This file implements a purely client-side admin toggle.
+ * It stores admin status in localStorage under the key `isAdmin_<uid>`.
+ * This is insecure and for prototyping only. Do NOT use in production.
+ */
+
 export default function Profile() {
   const router = useRouter();
 
   const nameSpanRef = useRef(null);
   const emailSpanRef = useRef(null);
   const messageRef = useRef(null);
+  const adminBadgeRef = useRef(null);
 
   const newNameRef = useRef(null);
+  const adminCodeRef = useRef(null);
 
   const currentPasswordRef = useRef(null);
   const newPasswordRef = useRef(null);
@@ -29,7 +37,9 @@ export default function Profile() {
   const changePassBtnRef = useRef(null);
   const signOutBtnRef = useRef(null);
   const deleteBtnRef = useRef(null);
+  const makeAdminBtnRef = useRef(null);
 
+  // helper to set message text
   function setMessage(text = "", color = "crimson") {
     if (!messageRef.current) return;
     messageRef.current.textContent = text;
@@ -42,6 +52,25 @@ export default function Profile() {
     ref.current.style.cursor = isLoading ? "not-allowed" : "pointer";
   }
 
+  // helper localStorage key
+  function adminKeyForUid(uid) {
+    return `isAdmin_${uid}`;
+  }
+
+  // check localStorage for admin flag for current user and update UI
+  async function updateAdminUI(user) {
+    if (!user) {
+      if (adminBadgeRef.current) adminBadgeRef.current.style.display = "none";
+      return;
+    }
+    const key = adminKeyForUid(user.uid);
+    const isAdmin =
+      typeof window !== "undefined" && !!localStorage.getItem(key);
+    if (adminBadgeRef.current) {
+      adminBadgeRef.current.style.display = isAdmin ? "inline-block" : "none";
+    }
+  }
+
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (user) => {
       if (user) {
@@ -51,7 +80,9 @@ export default function Profile() {
           emailSpanRef.current.textContent = user.email || "—";
         if (newNameRef.current)
           newNameRef.current.value = user.displayName || "";
+        updateAdminUI(user);
       } else {
+        // not signed in -> redirect to login
         router.push("/login");
       }
     });
@@ -69,6 +100,7 @@ export default function Profile() {
     return message || "An error occurred.";
   }
 
+  // Update display name
   async function handleChangeName(e) {
     e.preventDefault();
     setMessage("");
@@ -88,6 +120,7 @@ export default function Profile() {
     }
   }
 
+  // Change password (re-auth via signInWithEmailAndPassword)
   async function handleChangePassword(e) {
     e.preventDefault();
     setMessage("");
@@ -116,8 +149,7 @@ export default function Profile() {
       setMessage("Password updated successfully.", "green");
     } catch (err) {
       const code = err?.code || "";
-      const msg = err?.message || "";
-      setMessage(friendlyMessage(code, msg));
+      setMessage(friendlyMessage(code, err?.message));
       if (code && code.includes("requires-recent-login")) {
         setMessage("Please sign out and sign in again, then retry.", "crimson");
       }
@@ -131,6 +163,13 @@ export default function Profile() {
     setBtnLoading(signOutBtnRef, true);
     try {
       await signOut(auth);
+      // clear admin UI state for safety on signout
+      const user = auth.currentUser;
+      if (user && typeof window !== "undefined") {
+        // do not remove localStorage so admin flag persists across sessions if intended
+        // Uncomment next line to remove localStorage admin flag on sign-out:
+        // localStorage.removeItem(adminKeyForUid(user.uid));
+      }
       router.push("/");
     } catch (err) {
       setMessage("Sign out failed.");
@@ -139,10 +178,9 @@ export default function Profile() {
     }
   }
 
-  // ---- New: Delete account handler ----
+  // Delete account handler (unchanged)
   async function handleDeleteAccount() {
     setMessage("");
-    // Explicit typed confirmation
     const typed = window.prompt(
       "Type DELETE to permanently delete your account. This action cannot be undone."
     );
@@ -161,17 +199,14 @@ export default function Profile() {
     }
 
     try {
-      // Try delete directly
       await deleteUser(user);
       setMessage("Account deleted. Redirecting...", "green");
-      // optional: sign out call is unnecessary because user is deleted, but safe
       try {
         await signOut(auth);
       } catch (_) {}
       router.push("/");
     } catch (err) {
       const code = err?.code || "";
-      // If deletion requires recent login, ask for password and re-auth
       if (code && code.includes("requires-recent-login")) {
         const pw = window.prompt(
           "To delete your account we need to re-confirm your credentials. Please enter your current password:"
@@ -181,11 +216,8 @@ export default function Profile() {
           setBtnLoading(deleteBtnRef, false);
           return;
         }
-
         try {
-          // Re-authenticate
           await signInWithEmailAndPassword(auth, user.email, pw);
-          // Retry delete
           await deleteUser(auth.currentUser);
           setMessage("Account deleted. Redirecting...", "green");
           try {
@@ -204,6 +236,66 @@ export default function Profile() {
     }
   }
 
+  // ---------- Client-side admin (prototype, insecure) ----------
+  async function handleMakeAdmin(e) {
+    e.preventDefault();
+    setMessage("");
+    const code = adminCodeRef.current?.value?.trim() || "";
+    if (!code) return setMessage("Please enter the admin code.");
+
+    setBtnLoading(makeAdminBtnRef, true);
+
+    const user = auth.currentUser;
+    if (!user) {
+      setMessage("Not signed in.");
+      setBtnLoading(makeAdminBtnRef, false);
+      return;
+    }
+
+    try {
+      // Prototype check: require exact admin code "metaldetector"
+      if (code !== "metaldetector") {
+        setMessage("Invalid admin code.");
+        setBtnLoading(makeAdminBtnRef, false);
+        return;
+      }
+
+      const key = adminKeyForUid(user.uid);
+      if (typeof window !== "undefined") {
+        localStorage.setItem(key, "1");
+      }
+
+      // Update UI immediately
+      updateAdminUI(user);
+      setMessage(
+        "Account granted admin privileges (client-side only).",
+        "green"
+      );
+    } catch (err) {
+      console.error("make-admin (client) error:", err);
+      setMessage("Failed to mark as admin (client-side).");
+    } finally {
+      setBtnLoading(makeAdminBtnRef, false);
+      // clear the input
+      if (adminCodeRef.current) adminCodeRef.current.value = "";
+    }
+  }
+
+  // helper to revoke admin (for prototype convenience)
+  function handleRevokeAdmin() {
+    const user = auth.currentUser;
+    if (!user) {
+      setMessage("Not signed in.");
+      return;
+    }
+    if (typeof window !== "undefined") {
+      localStorage.removeItem(adminKeyForUid(user.uid));
+    }
+    updateAdminUI(user);
+    setMessage("Admin privileges revoked (client-side).", "crimson");
+    router.refresh();
+  }
+
   return (
     <div className="min-h-screen bg-neutral-800 flex items-start justify-center py-12 px-6">
       <div className="w-full max-w-3xl">
@@ -212,14 +304,32 @@ export default function Profile() {
           <div className="space-y-4">
             {/* Basic info */}
             <div>
-              <p className="text-sm text-neutral-400 mb-1">Display name</p>
-              <p ref={nameSpanRef} className="text-lg text-white mb-2">
-                —
-              </p>
-              <p className="text-sm text-neutral-400 mb-1">Email</p>
-              <p ref={emailSpanRef} className="text-sm text-neutral-300 mb-2">
-                —
-              </p>
+              <div className="flex items-center gap-3">
+                <div>
+                  <p className="text-sm text-neutral-400 mb-1">Display name</p>
+                  <p ref={nameSpanRef} className="text-lg text-white mb-2">
+                    —
+                  </p>
+                  <p className="text-sm text-neutral-400 mb-1">Email</p>
+                  <p
+                    ref={emailSpanRef}
+                    className="text-sm text-neutral-300 mb-2"
+                  >
+                    —
+                  </p>
+                </div>
+
+                {/* Admin badge */}
+                <div
+                  ref={adminBadgeRef}
+                  style={{ display: "none" }}
+                  className="ml-auto"
+                >
+                  <span className="inline-flex items-center rounded-lg bg-amber-600/20 px-3 py-1 text-sm text-amber-300 ring-1 ring-inset ring-amber-600/30">
+                    Admin
+                  </span>
+                </div>
+              </div>
             </div>
 
             {/* Change display name */}
@@ -275,7 +385,44 @@ export default function Profile() {
                 </button>
               </div>
             </form>
+
             <hr className="border-neutral-800 my-2" />
+
+            {/* Admin code form (client-side prototype) */}
+            <form onSubmit={handleMakeAdmin} className="space-y-2">
+              <label className="block text-sm text-neutral-300">
+                Admin code (prototype)
+              </label>
+              <input
+                ref={adminCodeRef}
+                type="password"
+                className="mt-1 w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                placeholder="Enter admin code"
+              />
+              <div className="flex gap-2">
+                <button
+                  ref={makeAdminBtnRef}
+                  type="submit"
+                  className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium hover:bg-emerald-500"
+                >
+                  Make account admin
+                </button>
+                <button
+                  type="button"
+                  onClick={handleRevokeAdmin}
+                  className="rounded-lg border border-neutral-700 px-3 py-2 text-sm"
+                >
+                  Revoke admin
+                </button>
+              </div>
+              <p className="text-xs text-neutral-500 mt-1">
+                Prototype mode: admin flag is stored in browser localStorage
+                only.
+              </p>
+            </form>
+
+            <hr className="border-neutral-800 my-2" />
+
             <div className="flex gap-2">
               <button
                 ref={signOutBtnRef}
@@ -286,7 +433,6 @@ export default function Profile() {
                 Sign out
               </button>
 
-              {/* Delete account button */}
               <button
                 ref={deleteBtnRef}
                 type="button"
@@ -296,6 +442,7 @@ export default function Profile() {
                 Delete account
               </button>
             </div>
+
             {/* message area */}
             <div ref={messageRef} className="min-h-[1rem] text-sm mt-2"></div>
           </div>
