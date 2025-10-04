@@ -13,9 +13,9 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body
-       className={`${spacemono.variable} bg-neutral-800 text-white font-mono`}
-      >
+  <body
+   className={`${spacemono.variable} bg-neutral-800 text-white font-mono`}
+  >
         <Navbar/>
         <div className="flex max-w-scree">
         <Sidebar/>
