@@ -1,9 +1,14 @@
+// app/layout.js (or wherever your RootLayout is)
 import { Space_Mono } from "next/font/google";
 import "./globals.css";
 import Navbar from "../../components/navbar";
 import Sidebar from "../../components/sidebar";
 
-const spacemono = Space_Mono({ weight: ['400', '700'], variable: '--font-mono', subsets: ['latin']})
+const spacemono = Space_Mono({
+  weight: ["400", "700"],
+  variable: "--font-mono",
+  subsets: ["latin"],
+});
 
 export const metadata = {
   title: "Tungsten Satellite",
@@ -13,13 +18,17 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-  <body
-   className={`${spacemono.variable} bg-neutral-800 text-white font-mono`}
-  >
-        <Navbar/>
-        <div className="flex max-w-scree">
-        <Sidebar/>
-        {children}
+      <body
+        className={`${spacemono.variable} bg-neutral-800 text-white font-mono flex flex-col min-h-screen`}
+      >
+        <Navbar />
+
+        {/* main row: sidebar + content; flex-1 makes this row fill remaining height */}
+        <div className="flex flex-1 max-w-screen w-full overflow-hidden">
+          <Sidebar />
+
+          {/* content column — allow it to scroll if content is larger than available height */}
+          <main className="flex-1 overflow-auto">{children}</main>
         </div>
       </body>
     </html>
