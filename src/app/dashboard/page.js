@@ -19,6 +19,36 @@ import { auth } from "../../lib/firebaseClient";
 // If you don't use Tailwind, the layout still works with minimal inline styles.
 
 export default function DashboardPage() {
+  // --- Plan Option State ---
+  const [planOptionId, setPlanOptionId] = useState(1); // Default to 1 on load
+
+  // --- Module Presets (dynamic from backend) ---
+  const [payloadPresets, setPayloadPresets] = useState([]);
+
+  // Fetch modules for current planOptionId
+  async function fetchPresets(id) {
+    console.log('[DEBUG] Fetching modules for planOptionId:', id);
+    const res = await fetch(`/api/modules?plan_option_id=${id}`);
+    const data = await res.json();
+    console.log('[DEBUG] Modules fetched:', data.modules);
+    setPayloadPresets(data.modules || []);
+  }
+
+  // Ensure modules are loaded when planOptionId changes (including initial load)
+  useEffect(() => {
+    console.log('[DEBUG] useEffect triggered for planOptionId:', planOptionId);
+    fetchPresets(planOptionId);
+  }, [planOptionId]);
+
+  // Plan option dropdown handler
+  function handlePlanOptionChange(idOrEvent) {
+    // Accept either a direct id (from Header) or an event (from select)
+    let id = typeof idOrEvent === 'number' ? idOrEvent : Number(idOrEvent.target.value);
+    console.log('[DEBUG] handlePlanOptionChange called with:', idOrEvent);
+    console.log('[DEBUG] Plan option selected:', id);
+    setPlanOptionId(id);
+    // fetchPresets(id); // Now handled by useEffect
+  }
   // --- Request Form State ---
   // SubscriptionPlan State
   const [subscriptionPlan, setSubscriptionPlan] = useState({
@@ -114,13 +144,12 @@ export default function DashboardPage() {
         credits: dashboardCredits,
         email: userEmail, // <-- add email here too if needed
       },
-      modules: [
-        { name: "Camera", w: 2, h: 2, massKg: 3.2 },
-        { name: "µLab", w: 3, h: 2, massKg: 5.8 },
-        { name: "Comms", w: 2, h: 1, massKg: 1.1 },
-        { name: "Battery", w: 1, h: 2, massKg: 2.4 },
-        { name: "AI Module", w: 2, h: 2, massKg: 2.7 },
-      ],
+      modules: payloadPresets.map(m => ({
+        name: m.name || m.label,
+        w: m.w,
+        h: m.h,
+        massKg: m.massKg
+      })),
       dashboard_plan: dashboardPlan,
       dashboard_credits: dashboardCredits,
     };
@@ -218,14 +247,6 @@ export default function DashboardPage() {
   // Derived value: is any payload item selected?
   const showSelected = !!selectedId;
 
-  // --- Payload Builder Presentational Props ---
-  const payloadPresets = [
-    { label: "Camera", w: 2, h: 2, massKg: 3.2 },
-    { label: "µLab", w: 3, h: 2, massKg: 5.8 },
-    { label: "Comms", w: 2, h: 1, massKg: 1.1 },
-    { label: "Battery", w: 1, h: 2, massKg: 2.4 },
-    { label: "AI Module", w: 2, h: 2, massKg: 2.7 },
-  ];
 
   function handleBayWidthChange(e) {
     setBayWidth(Number(e.target.value));
@@ -476,7 +497,7 @@ export default function DashboardPage() {
           tier={tier}
           credits={credits}
           onBuy={() => buyCredits(200)}
-          onChangeTier={changeTier}
+          onChangeTier={handlePlanOptionChange}
         />
         <section className="w-full flex flex-col gap-8">
           <RequestForm
@@ -504,6 +525,8 @@ export default function DashboardPage() {
             onCellClick={handleCellClick}
             onGridClick={handleGridClick}
             presets={payloadPresets}
+            selectedPlanOptionId={planOptionId}
+            onFetchPresets={fetchPresets}
             onAddPreset={handleAddPreset}
             usedCells={usedCells}
             capacityCells={capacityCells}

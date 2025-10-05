@@ -3,7 +3,7 @@ import sys
 import json
 from base64 import b64decode
 from database import save_experiment, save_experiment_file, create_table
-from database import get_all_experiments, save_payload_builder, get_modules
+from database import get_all_experiments, save_payload_builder
 from data import ExperimentData, ExperimentFileData
 
 
@@ -18,8 +18,20 @@ def main():
 
     # If run with --modules, print available module types
     if len(sys.argv) > 1 and sys.argv[1] == '--modules':
-        rows = get_modules()
-        print(json.dumps(rows))
+        # Support optional --plan_option_id argument
+        plan_option_id = 1
+        if '--plan_option_id' in sys.argv:
+            idx = sys.argv.index('--plan_option_id')
+            if len(sys.argv) > idx + 1:
+                try:
+                    plan_option_id = int(sys.argv[idx + 1])
+                except Exception:
+                    plan_option_id = 1
+        from data import get_modules_for_plan_option
+        rows = get_modules_for_plan_option(plan_option_id)
+        # Convert dataclass objects to dicts
+        modules = [m.__dict__ for m in rows]
+        print(json.dumps({"modules": modules}))
         return
 
     # If run with --confirm, update the experiment's status

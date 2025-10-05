@@ -68,6 +68,7 @@ export function PayloadBuilder({
   selectedLabel,
   onMoveSelected,
   onRemoveSelected,
+  // ...existing code...
 }) {
   return (
     <Card title="Payload Builder" subtitle={`Used ${usedCells}/${capacityCells} cells · Mass ${massKg.toFixed(1)} kg`}>
@@ -78,12 +79,12 @@ export function PayloadBuilder({
           <div className="flex flex-wrap gap-2">
             {presets.map((p) => (
               <button
-                key={p.label}
+                key={p.id || p.name}
                 onClick={() => onAddPreset(p)}
-                className="rounded-xl border border-neutral-700 bg-neutral-800 px-3 py-2 text-xs hover:border-neutral-600"
+                className="rounded-xl border-2 border-blue-500 bg-blue-900 px-5 py-3 text-base font-semibold text-white shadow-lg hover:bg-blue-700 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
                 title={`${p.w}x${p.h} · ${p.massKg} kg`}
               >
-                {p.label}
+                {p.name}
               </button>
             ))}
           </div>
@@ -200,18 +201,26 @@ export function Header({ tier, credits, credits_available, onBuy, onChangeTier, 
         { id: 3, name: "Enterprise", perks: "Custom solutions" }
       ];
 
-  // Helper to get selected plan option id for submission
-  function getSelectedPlanOptionId() {
-    // If plan_option_id is set and valid, use it
-    if (subscriptionPlan && typeof subscriptionPlan.plan_option_id !== 'undefined' && subscriptionPlan.plan_option_id && subscriptionPlan.plan_option_id !== '' && subscriptionPlan.plan_option_id !== 0) {
-      return subscriptionPlan.plan_option_id;
+  // Helper to get selected plan option name for display
+  // Track selected plan id locally for instant UI update
+  const [selectedPlanId, setSelectedPlanId] = useState(
+    (subscriptionPlan && typeof subscriptionPlan.plan_option_id !== 'undefined')
+      ? subscriptionPlan.plan_option_id
+      : (loadedPlanOptions.length > 0 ? loadedPlanOptions[0].id : 1)
+  );
+
+  React.useEffect(() => {
+    if (subscriptionPlan && typeof subscriptionPlan.plan_option_id !== 'undefined') {
+      setSelectedPlanId(subscriptionPlan.plan_option_id);
     }
-    // Otherwise, default to first available plan option
-    if (loadedPlanOptions.length > 0) {
-      return loadedPlanOptions[0].id;
-    }
-    // If no plan options, return a fallback value (should never happen)
-    return 1;
+  }, [subscriptionPlan]);
+
+  function getSelectedPlanOptionName() {
+    const found = loadedPlanOptions.find(p => p.id === selectedPlanId);
+    if (found) return found.name;
+    if (tier && loadedPlanOptions.some(p => p.name === tier)) return tier;
+    if (loadedPlanOptions.length > 0) return loadedPlanOptions[0].name;
+    return "Free";
   }
   return (
     <Card title="Mission Control Dashboard" subtitle="Design experiments, manage credits, and pack your education satellite payload.">
@@ -221,7 +230,7 @@ export function Header({ tier, credits, credits_available, onBuy, onChangeTier, 
             className="rounded-xl bg-emerald-600/20 px-4 py-2 text-base text-emerald-300 ring-1 ring-inset ring-emerald-600/40 font-medium flex items-center gap-2"
             onClick={() => setOpen((v) => !v)}
           >
-            {tier} Plan
+            {getSelectedPlanOptionName()} Plan
             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
           </button>
           {open && (
@@ -229,7 +238,7 @@ export function Header({ tier, credits, credits_available, onBuy, onChangeTier, 
               {loadedPlanOptions.map((p) => (
                 <button
                   key={p.id}
-                  onClick={() => { setOpen(false); onChangeTier(p.name); }}
+                  onClick={() => { setOpen(false); setSelectedPlanId(p.id); onChangeTier(p.id); }}
                   className={`w-full text-left px-4 py-2 text-base ${tier === p.name ? "bg-emerald-600/20 text-emerald-200" : "hover:bg-neutral-800 text-neutral-200"}`}
                   title={p.perks}
                 >

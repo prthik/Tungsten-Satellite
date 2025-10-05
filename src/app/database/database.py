@@ -262,13 +262,7 @@ def save_payload_builder(cur: sqlite3.Cursor, builder: dict, modules: list = Non
         (:name, :bay_width, :bay_height, :items_json, :created_at);
     """, builder)
     builder_id = cur.lastrowid
-    # Save modules if provided
-    if modules:
-        for mod in modules:
-            cur.execute("""
-                INSERT OR IGNORE INTO modules (name, w, h, massKg)
-                VALUES (?, ?, ?, ?)
-            """, (mod['name'], mod['w'], mod['h'], mod['massKg']))
+    # No dynamic module addition; modules are static
     return builder_id
 
 # Get a payload builder by id
@@ -329,7 +323,7 @@ def cleanup_database(cur: sqlite3.Cursor):
 
 # Fetch all modules
 @with_db_session
-def get_modules(cur: sqlite3.Cursor):
-    cur.execute("SELECT id, name, w, h, massKg FROM modules ORDER BY id ASC")
-    rows = cur.fetchall()
-    return [dict(row) for row in rows]
+def get_modules_by_plan_option(cur: sqlite3.Cursor, plan_option_id: int):
+    from data import MODULE_TYPES
+    # Filter static modules by subscription_plan_option_id
+    return [m for m in MODULE_TYPES if m.subscription_plan_option_id == plan_option_id]
