@@ -4,10 +4,10 @@ import path from 'path'
 
 export async function GET(req) {
   try {
-    const { searchParams } = new URL(req.url);
-    const planOptionId = parseInt(searchParams.get('plan_option_id'), 10) || 1;
-    const scriptPath = path.join(process.cwd(), 'src', 'app', 'database', 'cli.py');
-    const py = spawn('python3', [scriptPath, '--modules', '--plan_option_id', String(planOptionId)]);
+  const { searchParams } = new URL(req.url);
+  const planOptionId = searchParams.get('plan_option_id') || '1';
+  const scriptPath = path.join(process.cwd(), 'src', 'app', 'database', 'cli.py');
+  const py = spawn('python3', [scriptPath, '--modules', '--plan_option_id', planOptionId]);
     let stdout = '';
     let stderr = '';
     py.stdout.on('data', (data) => { stdout += data.toString(); });

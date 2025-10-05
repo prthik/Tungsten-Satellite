@@ -82,11 +82,23 @@ MODULE_TYPES = [
     ModuleType(id=21, name="AI Module", w=2, h=2, massKg=2.7, subscription_plan_option_id=3),
 ]
 
-def get_modules_for_plan_option(plan_option_id: int) -> List[ModuleType]:
+def get_modules_for_plan_option(plan_option_id) -> List[ModuleType]:
     """
     Return all ModuleType objects for the given subscription plan option id.
-    Pass any plan_option_id to dynamically filter modules for that plan. 
+    Accepts string or int, including values like '1:1'.
     """
+    # If plan_option_id is like '1:1', try to extract the first integer
+    if isinstance(plan_option_id, str):
+        if ':' in plan_option_id:
+            try:
+                plan_option_id = int(plan_option_id.split(':')[0])
+            except Exception:
+                plan_option_id = 1
+        else:
+            try:
+                plan_option_id = int(plan_option_id)
+            except Exception:
+                plan_option_id = 1
     return [m for m in MODULE_TYPES if m.subscription_plan_option_id == plan_option_id]
 # Utility to clear all module types from the database
 def clear_moduletypes_db():

@@ -19,14 +19,11 @@ def main():
     # If run with --modules, print available module types
     if len(sys.argv) > 1 and sys.argv[1] == '--modules':
         # Support optional --plan_option_id argument
-        plan_option_id = 1
+        plan_option_id = '1'
         if '--plan_option_id' in sys.argv:
             idx = sys.argv.index('--plan_option_id')
             if len(sys.argv) > idx + 1:
-                try:
-                    plan_option_id = int(sys.argv[idx + 1])
-                except Exception:
-                    plan_option_id = 1
+                plan_option_id = sys.argv[idx + 1]
         from data import get_modules_for_plan_option
         rows = get_modules_for_plan_option(plan_option_id)
         # Convert dataclass objects to dicts
