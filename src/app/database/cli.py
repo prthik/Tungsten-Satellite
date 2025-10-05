@@ -111,7 +111,6 @@ def main():
         name=exp.get('name', ''),
         description=exp.get('description', ''),
         status=exp.get('status', 'pending approval'),
-        status_option_id=exp.get('status_option_id', 1),
         payload=payload_str,
         notes=exp.get('notes'),
         user_email=exp.get('user_email'),

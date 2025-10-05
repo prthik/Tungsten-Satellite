@@ -29,6 +29,13 @@ export default function RequestsPage() {
   const [selected, setSelected] = useState(null); // selected experiment object
   const [processing, setProcessing] = useState(false);
   const [confirmationNotes, setConfirmationNotes] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [editStatus, setEditStatus] = useState("pending approval");
+
+  // Filter requests based on status
+  const filteredRequests = requests.filter((r) =>
+    statusFilter === "all" ? true : r.status === statusFilter
+  );
 
   // Fetch experiments from backend
   useEffect(() => {
@@ -75,37 +82,45 @@ export default function RequestsPage() {
   // open modal
   function viewRequest(req) {
     setSelected(req);
+    setEditStatus(req.status);
+    setConfirmationNotes(req.notes || "");
   }
 
   // close modal
   function closeModal() {
     setSelected(null);
+    setEditStatus("pending approval");
+    setConfirmationNotes("");
   }
 
-  // Confirm experiment: update confirmation status and notes
-  async function confirmCompleted(id) {
+  // Save changes to experiment
+  async function saveChanges(id) {
     setProcessing(true);
-    await fetch("/api/experiments/confirm", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        experiment_id: id,
-        status: "experiment queued",
-        notes: confirmationNotes,
-      }),
-    });
-    // Refresh experiments
-    fetch("/api/experiments")
-      .then((res) => res.json())
-      .then((data) => {
-        setRequests(
-          Array.isArray(data)
-            ? data.filter((r) => r.status === "pending approval")
-            : []
-        );
-        setProcessing(false);
-        closeModal();
+    try {
+      const res = await fetch("/api/experiments/confirm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          experiment_id: id,
+          status: editStatus,
+          notes: confirmationNotes,
+        }),
       });
+      const data = await res.json();
+      if (!data.ok) {
+        throw new Error(data.error || "Failed to save changes");
+      }
+      // Refresh experiments
+      const updatedRes = await fetch("/api/experiments");
+      const updatedData = await updatedRes.json();
+      setRequests(Array.isArray(updatedData) ? updatedData : []);
+      closeModal();
+    } catch (error) {
+      console.error("Error saving changes:", error);
+      alert("Failed to save changes: " + error.message);
+    } finally {
+      setProcessing(false);
+    }
   }
 
   if (loadingAuth) {
@@ -125,8 +140,22 @@ export default function RequestsPage() {
     <div className="min-h-screen bg-neutral-800 p-8">
       <div className="max-w-6xl mx-auto">
         <Card title="Approvals" subtitle="Review and confirm pending requests.">
+          <div className="mb-4 flex items-center gap-4">
+            <label className="text-neutral-400">Filter by Status:</label>
+            <select
+              className="bg-neutral-900 border border-neutral-700 rounded px-3 py-1 text-neutral-200"
+              onChange={(e) => setStatusFilter(e.target.value)}
+              value={statusFilter}
+            >
+              <option value="all">All Statuses</option>
+              <option value="pending approval">Pending Approval</option>
+              <option value="experiment queued">Experiment Queued</option>
+              <option value="experiment completed">Experiment Completed</option>
+              <option value="failed">Failed</option>
+            </select>
+          </div>
           <div className="mt-4">
-            {requests.length === 0 ? (
+            {filteredRequests.length === 0 ? (
               <div className="text-neutral-400 p-6 text-center">
                 No pending requests.
               </div>
@@ -142,7 +171,7 @@ export default function RequestsPage() {
                     </tr>
                   </thead>
                   <tbody className="text-neutral-200">
-                    {requests.map((r) => (
+                    {filteredRequests.map((r) => (
                       <tr
                         key={r.id}
                         className="border-b border-neutral-800 hover:bg-neutral-900/30"
@@ -475,36 +504,52 @@ export default function RequestsPage() {
               </div>
 
               {/* Fixed Footer */}
-              {selected.status === "pending approval" && (
-                <div className="mt-4 pt-4 border-t border-neutral-800 flex-shrink-0 flex flex-col gap-3">
+              <div className="mt-4 pt-4 border-t border-neutral-800 flex-shrink-0 flex flex-col gap-3">
+                <div className="flex flex-col gap-2">
+                  <label className="text-neutral-400">Status:</label>
+                  <select
+                    className="bg-neutral-900 border border-neutral-700 rounded px-3 py-2 text-neutral-200"
+                    value={editStatus}
+                    onChange={(e) => setEditStatus(e.target.value)}
+                  >
+                    <option value="pending approval">Pending Approval</option>
+                    <option value="experiment queued">Experiment Queued</option>
+                    <option value="experiment completed">
+                      Experiment Completed
+                    </option>
+                    <option value="failed">Failed</option>
+                  </select>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label className="text-neutral-400">Notes:</label>
                   <textarea
                     className="w-full rounded border border-neutral-700 bg-neutral-900 p-2 text-sm text-white"
                     rows={3}
-                    placeholder="Add approval notes..."
+                    placeholder="Add notes..."
                     value={confirmationNotes}
                     onChange={(e) => setConfirmationNotes(e.target.value)}
                   />
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={() => confirmCompleted(selected.id)}
-                      disabled={processing}
-                      className={`rounded-lg px-4 py-2 text-sm font-medium ${
-                        processing
-                          ? "bg-neutral-700 cursor-not-allowed"
-                          : "bg-emerald-600 hover:bg-emerald-500"
-                      }`}
-                    >
-                      {processing ? "Approving..." : "Approve Experiment"}
-                    </button>
-                    <button
-                      onClick={closeModal}
-                      className="rounded-lg border border-neutral-700 px-4 py-2 text-sm"
-                    >
-                      Cancel
-                    </button>
-                  </div>
                 </div>
-              )}
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => saveChanges(selected.id)}
+                    disabled={processing}
+                    className={`rounded-lg px-4 py-2 text-sm font-medium ${
+                      processing
+                        ? "bg-neutral-700 cursor-not-allowed"
+                        : "bg-emerald-600 hover:bg-emerald-500"
+                    }`}
+                  >
+                    {processing ? "Saving..." : "Save Changes"}
+                  </button>
+                  <button
+                    onClick={closeModal}
+                    className="rounded-lg border border-neutral-700 px-4 py-2 text-sm"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
