@@ -27,9 +27,9 @@ def main():
         from database import update_experiment_confirmation
         payload = json.load(sys.stdin)
         experiment_id = payload.get('experiment_id')
-        new_status = "experiment queued" if payload.get('confirmed') else "failed"
-        notes = payload.get('confirmation_notes', '')
-        rows_updated = update_experiment_confirmation(experiment_id, new_status, notes)
+        status = payload.get('status', 'experiment queued')  # Default to queued if not specified
+        notes = payload.get('notes', '')
+        rows_updated = update_experiment_confirmation(experiment_id, status, notes)
         print(json.dumps({"ok": True, "updated": rows_updated}))
         return
 
