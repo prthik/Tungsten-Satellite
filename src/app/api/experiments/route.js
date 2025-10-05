@@ -1,75 +1,111 @@
-import { NextResponse } from 'next/server'
-import { spawn } from 'child_process'
-import path from 'path'
+import { NextResponse } from "next/server";
+import { spawn } from "child_process";
+import path from "path";
 
 export async function POST(req) {
   try {
-    const body = await req.json()
+    const body = await req.json();
     // Call python CLI with JSON via stdin
-    const scriptPath = path.join(process.cwd(), 'src', 'app', 'database', 'cli.py')
+    const scriptPath = path.join(
+      process.cwd(),
+      "src",
+      "app",
+      "database",
+      "cli.py"
+    );
 
-    const py = spawn('python3', [scriptPath])
+    const py = spawn("python", [scriptPath]);
 
-  let stdout = ''
-  let stderr = ''
+    let stdout = "";
+    let stderr = "";
 
-    py.stdout.on('data', (data) => { stdout += data.toString() })
-    py.stderr.on('data', (data) => { stderr += data.toString() })
+    py.stdout.on("data", (data) => {
+      stdout += data.toString();
+    });
+    py.stderr.on("data", (data) => {
+      stderr += data.toString();
+    });
 
     const promise = new Promise((resolve, reject) => {
-      py.on('close', (code) => {
-        if (code === 0) resolve({ stdout, stderr })
-        else reject(new Error(`python exited ${code}: ${stderr}`))
-      })
-      py.on('error', (err) => reject(err))
-    })
+      py.on("close", (code) => {
+        if (code === 0) resolve({ stdout, stderr });
+        else reject(new Error(`python exited ${code}: ${stderr}`));
+      });
+      py.on("error", (err) => reject(err));
+    });
 
     // Write JSON to stdin
-    py.stdin.write(JSON.stringify(body))
-    py.stdin.end()
+    py.stdin.write(JSON.stringify(body));
+    py.stdin.end();
 
-    await promise
+    await promise;
 
     // Try to parse stdout from the python CLI and forward it
     let parsed;
     try {
       parsed = stdout ? JSON.parse(stdout) : { ok: true };
     } catch (err) {
-      parsed = { ok: false, error: 'Invalid JSON from backend', raw: stdout };
+      parsed = { ok: false, error: "Invalid JSON from backend", raw: stdout };
     }
     return NextResponse.json(parsed);
   } catch (err) {
-    return NextResponse.json({ ok: false, error: String(err) }, { status: 500 })
+    return NextResponse.json(
+      { ok: false, error: String(err) },
+      { status: 500 }
+    );
   }
 }
 
 export async function GET(req) {
   try {
-    const scriptPath = path.join(process.cwd(), 'src', 'app', 'database', 'cli.py')
-    const py = spawn('python3', [scriptPath, '--list'])
+    console.log("Fetching experiments...");
+    const scriptPath = path.join(
+      process.cwd(),
+      "src",
+      "app",
+      "database",
+      "cli.py"
+    );
+    console.log("Using script path:", scriptPath);
+    const py = spawn("python", [scriptPath, "--list"]);
 
-    let stdout = ''
-    let stderr = ''
-    py.stdout.on('data', (data) => { stdout += data.toString() })
-    py.stderr.on('data', (data) => { stderr += data.toString() })
+    let stdout = "";
+    let stderr = "";
+    py.stdout.on("data", (data) => {
+      stdout += data.toString();
+      console.log("Received stdout:", data.toString());
+    });
+    py.stderr.on("data", (data) => {
+      stderr += data.toString();
+      console.log("Received stderr:", data.toString());
+    });
 
     const promise = new Promise((resolve, reject) => {
-      py.on('close', (code) => {
-        if (code === 0) resolve({ stdout, stderr })
-        else reject(new Error(`python exited ${code}: ${stderr}`))
-      })
-      py.on('error', (err) => reject(err))
-    })
+      py.on("close", (code) => {
+        if (code === 0) resolve({ stdout, stderr });
+        else reject(new Error(`python exited ${code}: ${stderr}`));
+      });
+      py.on("error", (err) => reject(err));
+    });
 
-    await promise
+    await promise;
 
     try {
-      const parsed = stdout ? JSON.parse(stdout) : []
-      return NextResponse.json(parsed)
+      console.log("Raw stdout:", stdout);
+      const parsed = stdout ? JSON.parse(stdout) : [];
+      console.log("Parsed data:", parsed);
+      return NextResponse.json(parsed);
     } catch (err) {
-      return NextResponse.json({ error: 'invalid output', raw: stdout }, { status: 500 })
+      console.error("Error parsing output:", err);
+      return NextResponse.json(
+        { error: "invalid output", raw: stdout },
+        { status: 500 }
+      );
     }
   } catch (err) {
-    return NextResponse.json({ ok: false, error: String(err) }, { status: 500 })
+    return NextResponse.json(
+      { ok: false, error: String(err) },
+      { status: 500 }
+    );
   }
 }

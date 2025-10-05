@@ -86,14 +86,16 @@ class UserData:
 
 @dataclass
 class ExperimentData:
-    user_id: Optional[int]
     name: str
     description: str
     status: str
     status_option_id: int
     payload: str = ''
+    notes: Optional[str] = None
     user_email: Optional[str] = None
     created_at: Optional[str] = None
+    experimentType: Optional[str] = None
+    ModulesNeeded: Optional[str] = None
 
 
 @dataclass

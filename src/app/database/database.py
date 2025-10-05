@@ -22,14 +22,14 @@ def with_db_session(func):
             conn.close()
     return wrapper
 
-# Update confirmation status and notes for an experiment
+# Update status and notes for an experiment
 @with_db_session
-def update_experiment_confirmation(cur: sqlite3.Cursor, experiment_id: int, confirmed: int, confirmation_notes: str):
+def update_experiment_confirmation(cur: sqlite3.Cursor, experiment_id: int, status: str, notes: str):
     cur.execute("""
         UPDATE experiments
-        SET confirmed = ?, confirmation_notes = ?
+        SET status = ?, notes = ?
         WHERE id = ?;
-    """, (confirmed, confirmation_notes, experiment_id))
+    """, (status, notes, experiment_id))
     return cur.rowcount
 
 @with_db_session
@@ -37,9 +37,14 @@ def drop_users_table(cur: sqlite3.Cursor):
     cur.execute("DROP TABLE IF EXISTS users;")
     return "users table dropped."
 
+def add_column_if_not_exists(cur: sqlite3.Cursor, table: str, column: str, type: str):
+    cur.execute(f"SELECT COUNT(*) FROM pragma_table_info('{table}') WHERE name='{column}'")
+    if cur.fetchone()[0] == 0:
+        cur.execute(f"ALTER TABLE {table} ADD COLUMN {column} {type}")
+
 @with_db_session
 def create_table(cur: sqlite3.Cursor):
-    cur.execute(f"""
+    cur.execute("""
     CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT, 
         username TEXT UNIQUE, 
@@ -47,18 +52,28 @@ def create_table(cur: sqlite3.Cursor):
         api_key_hash BLOB NOT NULL, 
         credits_available INTEGER DEFAULT 0,
         subscriptionplan_id INTEGER DEFAULT 0
-    );""")
+    )""")
+    
     cur.execute("""
     CREATE TABLE IF NOT EXISTS experiments (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER, 
-        name TEXT, 
+        name TEXT,
         description TEXT,
         status TEXT,
         payload TEXT,
-        FOREIGN KEY(user_id) REFERENCES users(id)
-    );
-    """)
+        notes TEXT,
+        user_email TEXT,
+        created_at TEXT,
+        experimentType TEXT,
+        ModulesNeeded TEXT
+    )""")
+
+    # Add new columns if they don't exist
+    add_column_if_not_exists(cur, "experiments", "notes", "TEXT")
+    add_column_if_not_exists(cur, "experiments", "user_email", "TEXT")
+    add_column_if_not_exists(cur, "experiments", "created_at", "TEXT")
+    add_column_if_not_exists(cur, "experiments", "experimentType", "TEXT")
+    add_column_if_not_exists(cur, "experiments", "ModulesNeeded", "TEXT")
 
     cur.execute("""
     CREATE TABLE IF NOT EXISTS experiment_files (
@@ -226,14 +241,19 @@ def save_user_data(cur: sqlite3.Cursor, userdata: UserData):
 def save_experiment(cur: sqlite3.Cursor, experimentdata: ExperimentData):
     if not is_dataclass(experimentdata): 
         return "Invalid Data"
-    cur.execute(f"""
-        INSERT INTO experiments
-        (user_id, name, description, status, status_option_id, payload, user_email, created_at)
-        VALUES
-        (:user_id, :name, :description, :status, :status_option_id, :payload, :user_email, :created_at);
-    """, asdict(experimentdata)
-    )
-    return cur.lastrowid
+    try:
+        data = asdict(experimentdata)
+        cur.execute("""
+            INSERT INTO experiments
+            (name, description, status, payload, notes, user_email, created_at, experimentType, ModulesNeeded)
+            VALUES
+            (:name, :description, :status, :payload, :notes, :user_email, :created_at, :experimentType, :ModulesNeeded)
+        """, data)
+        return cur.lastrowid
+    except Exception as e:
+        print(f"Error saving experiment: {str(e)}")
+        print(f"Data being saved: {data}")
+        raise
 
 @with_db_session
 def save_experiment_file(cur: sqlite3.Cursor, experimentfile: ExperimentFileData):
@@ -284,8 +304,12 @@ def delete_payload_builder(cur: sqlite3.Cursor, builder_id: int):
 
 @with_db_session
 def get_all_experiments(cur: sqlite3.Cursor):
-    # Fetch experiments
-    cur.execute("SELECT id, user_id, name, description, status, payload, confirmed, confirmation_notes, user_email, created_at FROM experiments ORDER BY id DESC")
+    # Fetch experiments with all fields
+    cur.execute("""
+        SELECT id, name, description, status, payload, notes, 
+               user_email, created_at, experimentType, ModulesNeeded 
+        FROM experiments 
+        ORDER BY id DESC""")
     ex_rows = cur.fetchall()
     results = []
     for ex in ex_rows:
@@ -294,15 +318,15 @@ def get_all_experiments(cur: sqlite3.Cursor):
         files = [dict(row) for row in cur.fetchall()]
         results.append({
             'id': ex_id,
-            'user_id': ex['user_id'],
             'name': ex['name'],
             'description': ex['description'],
             'status': ex['status'],
             'payload': ex['payload'],
-            'confirmed': ex['confirmed'],
-            'confirmation_notes': ex['confirmation_notes'],
+            'notes': ex['notes'],
             'user_email': ex['user_email'],
             'created_at': ex['created_at'],
+            'experimentType': ex['experimentType'],
+            'ModulesNeeded': ex['ModulesNeeded'],
             'files': files
         })
     return results

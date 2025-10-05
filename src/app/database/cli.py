@@ -22,6 +22,17 @@ def main():
         print(json.dumps(rows))
         return
 
+    # If run with --confirm, update the experiment's status
+    if len(sys.argv) > 1 and sys.argv[1] == '--confirm':
+        from database import update_experiment_confirmation
+        payload = json.load(sys.stdin)
+        experiment_id = payload.get('experiment_id')
+        new_status = "experiment queued" if payload.get('confirmed') else "failed"
+        notes = payload.get('confirmation_notes', '')
+        rows_updated = update_experiment_confirmation(experiment_id, new_status, notes)
+        print(json.dumps({"ok": True, "updated": rows_updated}))
+        return
+
 
     payload = json.load(sys.stdin)
     # Save all entities from data.py if present in payload
@@ -94,20 +105,18 @@ def main():
     if not exp:
         print(json.dumps({"error": "missing experiment"}))
         sys.exit(2)
-    user_id = exp.get('user_id', 0)
-    if user_id == 0:
-        user_id = None
     payload_str = json.dumps(payload)
     from data import ExperimentData
     exp_obj = ExperimentData(
-        user_id=user_id,
         name=exp.get('name', ''),
         description=exp.get('description', ''),
-        status=exp.get('status', 'new'),
-        status_option_id=exp.get('status_option_id', 1),
+        status=exp.get('status', 'pending approval'),
         payload=payload_str,
+        notes=exp.get('notes'),
         user_email=exp.get('user_email'),
-        created_at=exp.get('created_at')
+        created_at=exp.get('created_at'),
+        experimentType=exp.get('experimentType'),
+        ModulesNeeded=exp.get('ModulesNeeded')
     )
     exp_id = save_experiment(exp_obj)
 

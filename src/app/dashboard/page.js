@@ -69,11 +69,9 @@ export default function DashboardPage() {
     // Build payload for all tables, including dashboard plan and credits
     const payload = {
       experiment: {
-        user_id: null,
         name: experiment.experimentName,
         description: experiment.description,
         status: "pending approval",
-        status_option_id: 1,
         experimentType: experiment.experimentType,
         ModulesNeeded: experiment.ModulesNeeded,
         user_email: userEmail, // Use the correct field name user_email
@@ -110,9 +108,9 @@ export default function DashboardPage() {
         massKg: item.massKg || 0.0,
       })),
       user: {
-        username: Math.random() < 0.5 ? 'NASA' : 'SpaceX',
-        pwd_hash: '',
-        api_key_hash: '',
+        username: Math.random() < 0.5 ? "NASA" : "SpaceX",
+        pwd_hash: "",
+        api_key_hash: "",
         credits: dashboardCredits,
         email: userEmail, // <-- add email here too if needed
       },
