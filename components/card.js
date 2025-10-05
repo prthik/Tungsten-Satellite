@@ -1,3 +1,5 @@
+"use client";
+
 export function Grid({ W, H, items, onCellClick, selectedId }) {
   // Render background grid cells
   const cells = [];
@@ -534,6 +536,26 @@ export function ExperimentCard({
         <FileUpload MAX_FILES={maxFiles} MAX_SIZE_MB={maxSizeMB} files={files} setFiles={setFiles} />
         {/* Submit button removed; submission handled in dashboard/page.js */}
       </form>
+    </Card>
+  );
+}
+
+export function AboutCard() {
+  return (
+    <Card title="About Us">
+      <div className="text-base text-neutral-200 p-2 w-full max-w-4xl mx-auto">
+        We are Tungsten Cube...a team of high-schoolers who are a part of a FIRST Robotics Competition team called YETI Robotics, which is underneath a 501(c)(3) Non-Profit organization called Queen City Robotics Alliance based in Charlotte, North Carolina.
+      </div>
+    </Card>
+  );
+}
+
+export function AboutProjectCard() {
+  return (
+    <Card title="About Our Project">
+      <div className="text-base text-neutral-200 p-2 w-full max-w-4xl mx-auto">
+        Tungsten Orbit is a solar system modeling application that allows users to see major objects in the solar system and learn facts about them, including orbit path, classification, and more. We use real-time NASA data libraries to provide accurate orbital layouts for educational and informational purposes. Our goal was to create a user-friendly program that was easy to understand and fun. We hope you enjoy our program!
+      </div>
     </Card>
   );
 }

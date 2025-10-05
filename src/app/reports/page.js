@@ -53,10 +53,9 @@ export default function ReportsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-900 text-white p-8">
-      <h1 className="text-3xl font-bold mb-8">User Reports</h1>
+    <div className="min-h-screen bg-neutral-800 text-white p-8">
       {loading ? (
-        <div>Loading...</div>
+        <div><h1 className="text-3xl font-bold mb-8">Loading...</h1></div>
       ) : error ? (
         <div className="text-red-500">{error}</div>
       ) : (

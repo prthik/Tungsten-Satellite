@@ -5,11 +5,13 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { auth } from "../src/lib/firebaseClient";
 import { onAuthStateChanged } from "firebase/auth";
+import { usePathname } from "next/navigation";
 
 export default function Sidebar() {
   // undefined = loading, null = signed out, object = signed in
   const [user, setUser] = useState(undefined);
   const [isAdmin, setIsAdmin] = useState(false);
+  const pathname = usePathname();
 
   function adminKeyForUid(uid) {
     return `isAdmin_${uid}`;
@@ -49,14 +51,12 @@ export default function Sidebar() {
   return (
     <div className="flex flex-col w-64 min-h-screen border-r border-neutral-500 bg-neutral-900 shrink-0">
       <div className="py-8 px-6 space-y-6">
-        <div
-          className="hover:underline cursor-pointer"
-          style={{
-            display: "flex",
-            flexDirection: "row",
-            gap: "8px",
-            alignItems: "center",
-          }}
+        {/* Home link */}
+        <Link
+          href="/"
+          className={`flex flex-row gap-2 items-center px-4 py-2 rounded transition-all duration-200 text-base text-neutral-300 hover:text-white hover:bg-neutral-800 ${
+            pathname === "/" ? "bg-neutral-800 text-white" : ""
+          }`}
         >
           <svg
             width="24"
@@ -74,17 +74,14 @@ export default function Sidebar() {
             <path d="M5 10.5v7a1.5 1.5 0 0 0 1.5 1.5h11A1.5 1.5 0 0 0 19 17.5v-7" />
             <path d="M9 21v-6h6v6" />
           </svg>
-          <Link href={"/"}>Home</Link>
-        </div>
-
-        <div
-          className="hover:underline cursor-pointer"
-          style={{
-            display: "flex",
-            flexDirection: "row",
-            gap: "8px",
-            alignItems: "center",
-          }}
+          Home
+        </Link>
+        {/* Dashboard link */}
+        <Link
+          href="/dashboard"
+          className={`flex flex-row gap-2 items-center px-4 py-2 rounded transition-all duration-200 text-base text-neutral-300 hover:text-white hover:bg-neutral-800 ${
+            pathname === "/dashboard" ? "bg-neutral-800 text-white" : ""
+          }`}
         >
           <svg
             width="24"
@@ -103,17 +100,14 @@ export default function Sidebar() {
             <rect x="3" y="13" width="8" height="8" rx="1.5" />
             <rect x="13" y="13" width="8" height="8" rx="1.5" />
           </svg>
-          <Link href={"/dashboard"}> Dashboard</Link>
-        </div>
-
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "row",
-            gap: "8px",
-            alignItems: "center",
-          }}
-          className="hover:underline cursor-pointer"
+          Dashboard
+        </Link>
+        {/* Reports link */}
+        <Link
+          href="/reports"
+          className={`flex flex-row gap-2 items-center px-4 py-2 rounded transition-all duration-200 text-base text-neutral-300 hover:text-white hover:bg-neutral-800 ${
+            pathname === "/reports" ? "bg-neutral-800 text-white" : ""
+          }`}
         >
           <svg
             width="24"
@@ -128,50 +122,23 @@ export default function Sidebar() {
           >
             <title>Reports</title>
             <path d="M7 2h7l5 5v12a1.5 1.5 0 0 1-1.5 1.5H6.5A1.5 1.5 0 0 1 5 19.5V4.5A2.5 2.5 0 0 1 7.5 2H7z" />
-            <rect
-              x="8.2"
-              y="13"
-              width="1.6"
-              height="4.5"
-              rx="0.3"
-              fill="currentColor"
-            />
-            <rect
-              x="11"
-              y="10"
-              width="1.6"
-              height="7.5"
-              rx="0.3"
-              fill="currentColor"
-            />
-            <rect
-              x="13.8"
-              y="7"
-              width="1.6"
-              height="10.5"
-              rx="0.3"
-              fill="currentColor"
-            />
+            <rect x="8.2" y="13" width="1.6" height="4.5" rx="0.3" fill="currentColor" />
+            <rect x="11" y="10" width="1.6" height="7.5" rx="0.3" fill="currentColor" />
+            <rect x="13.8" y="7" width="1.6" height="10.5" rx="0.3" fill="currentColor" />
           </svg>
-          <Link href={"/reports"}> Reports</Link>
-        </div>
-
+          Reports
+        </Link>
+        {/* Approvals link (admin only) */}
         {isAdmin && (
           <>
-            <div className="mt-4 pt-4 border-t border-neutral-800 text-xs text-neutral-400">
-              Admin
-            </div>
-
-            <div
-              className="hover:underline cursor-pointer mt-2"
-              style={{
-                display: "flex",
-                flexDirection: "row",
-                gap: "8px",
-                alignItems: "center",
-              }}
+            <div className="pt-4 border-t border-neutral-800" aria-hidden="true"></div>
+            <Link
+              href="/requests"
+              className={`flex flex-row gap-2 items-center px-4 py-2 rounded transition-all duration-200 text-base text-amber-300 hover:text-amber-400 hover:bg-neutral-800 ${
+                pathname === "/requests" ? "bg-neutral-800 text-amber-400" : ""
+              }`}
+              style={{ marginTop: '0rem' }}
             >
-              {/* simple shield icon for admin */}
               <svg
                 width="24"
                 height="24"
@@ -187,8 +154,8 @@ export default function Sidebar() {
                 <path d="M12 2l7 4v6c0 5-3 9-7 10-4-1-7-5-7-10V6l7-4z" />
                 <path d="M9.5 12.5l2 2 4-4" />
               </svg>
-              <Link href={"/requests"}>Approvals</Link>
-            </div>
+              Approvals
+            </Link>
           </>
         )}
       </div>
