@@ -8,7 +8,7 @@ const About = () => {
         <div className="bg-neutral-950 p-6 rounded-lg border border-neutral-500">
           <h2 className="text-neutral-500 text-2xl font-semibold mb-4">About Us</h2>
           <p>
-            We are Tungsten Cube(legally distinct)
+            We are Tungsten Cube (legally distinct)
           </p>
         </div>
 

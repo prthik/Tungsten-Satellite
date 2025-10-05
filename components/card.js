@@ -71,7 +71,7 @@ export function PayloadBuilder({
 }) {
   return (
     <Card title="Payload Builder" subtitle={`Used ${usedCells}/${capacityCells} cells · Mass ${massKg.toFixed(1)} kg`}>
-      <div className="mb-4 w-full max-w-4xl mx-auto grid grid-cols-1 gap-4 md:grid-cols-[320px,1fr]">
+      <div className="mb-4 w-full max-w-6xl mx-auto grid grid-cols-1 gap-4 md:grid-cols-[420px,1fr]">
         {/* Presets */}
         <div className="rounded-xl border border-neutral-800 bg-neutral-900 p-3">
           <p className="mb-2 text-sm font-medium">Modules</p>
@@ -118,7 +118,7 @@ export function PayloadBuilder({
         </div>
 
         {/* Grid */}
-        <div>
+        <div className="w-full flex flex-col justify-center">
           <div
             onClick={onGridClick}
             className="relative aspect-[2/1] w-full select-none overflow-hidden rounded-xl border border-neutral-800 bg-neutral-900 p-2"
