@@ -32,14 +32,23 @@ export default function RequestsPage() {
 
   // Fetch experiments from backend
   useEffect(() => {
+    console.log("Fetching experiments...");
     fetch("/api/experiments")
-      .then((res) => res.json())
+      .then((res) => {
+        console.log("Response status:", res.status);
+        return res.json();
+      })
       .then((data) => {
-        // Only keep unconfirmed requests
-        const unconfirmed = Array.isArray(data)
-          ? data.filter((r) => !r.confirmed)
+        console.log("Received data:", data);
+        // Only keep pending approval requests
+        const pendingApproval = Array.isArray(data)
+          ? data.filter((r) => r.status === "pending approval")
           : [];
-        setRequests(unconfirmed);
+        console.log("Filtered pending approval requests:", pendingApproval);
+        setRequests(pendingApproval);
+      })
+      .catch((error) => {
+        console.error("Error fetching experiments:", error);
       });
   }, []);
   useEffect(() => {
@@ -81,8 +90,8 @@ export default function RequestsPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         experiment_id: id,
-        confirmed: 1,
-        confirmation_notes: confirmationNotes,
+        status: "experiment queued",
+        notes: confirmationNotes,
       }),
     });
     // Refresh experiments
@@ -90,7 +99,9 @@ export default function RequestsPage() {
       .then((res) => res.json())
       .then((data) => {
         setRequests(
-          Array.isArray(data) ? data.filter((r) => !r.confirmed) : []
+          Array.isArray(data)
+            ? data.filter((r) => r.status === "pending approval")
+            : []
         );
         setProcessing(false);
         closeModal();
@@ -425,23 +436,21 @@ export default function RequestsPage() {
                   )}
                 </div>
 
-                {/* Confirmation Status */}
+                {/* Status */}
                 <div>
                   <h4 className="text-lg font-semibold mb-2 text-white">
-                    Confirmation Status
+                    Status
                   </h4>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <p className="text-neutral-400">Confirmed</p>
-                      <p className="font-medium">
-                        {selected.confirmed ? "Yes" : "No"}
-                      </p>
+                      <p className="text-neutral-400">Current Status</p>
+                      <p className="font-medium">{selected.status}</p>
                     </div>
-                    {selected.confirmed && (
+                    {selected.notes && (
                       <div className="col-span-2">
-                        <p className="text-neutral-400">Confirmation Notes</p>
+                        <p className="text-neutral-400">Notes</p>
                         <p className="font-medium">
-                          {selected.confirmation_notes || "No notes provided"}
+                          {selected.notes || "No notes provided"}
                         </p>
                       </div>
                     )}
@@ -466,12 +475,12 @@ export default function RequestsPage() {
               </div>
 
               {/* Fixed Footer */}
-              {!selected.confirmed && (
+              {selected.status === "pending approval" && (
                 <div className="mt-4 pt-4 border-t border-neutral-800 flex-shrink-0 flex flex-col gap-3">
                   <textarea
                     className="w-full rounded border border-neutral-700 bg-neutral-900 p-2 text-sm text-white"
                     rows={3}
-                    placeholder="Add confirmation notes..."
+                    placeholder="Add approval notes..."
                     value={confirmationNotes}
                     onChange={(e) => setConfirmationNotes(e.target.value)}
                   />
@@ -485,7 +494,7 @@ export default function RequestsPage() {
                           : "bg-emerald-600 hover:bg-emerald-500"
                       }`}
                     >
-                      {processing ? "Confirming..." : "Confirm completed"}
+                      {processing ? "Approving..." : "Approve Experiment"}
                     </button>
                     <button
                       onClick={closeModal}

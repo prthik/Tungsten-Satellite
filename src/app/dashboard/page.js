@@ -69,10 +69,9 @@ export default function DashboardPage() {
     // Build payload for all tables, including dashboard plan and credits
     const payload = {
       experiment: {
-        user_id: null,
         name: experiment.experimentName,
         description: experiment.description,
-        status: "new",
+        status: "pending approval",
         experimentType: experiment.experimentType,
         ModulesNeeded: experiment.ModulesNeeded,
         user_email: userEmail, // Use the correct field name user_email

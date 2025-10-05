@@ -10,11 +10,10 @@ class Status:
 
 # Predefined status options
 STATUS_OPTIONS = [
-    Status(id=1, name="submitted"),
-    Status(id=2, name="queued"),
-    Status(id=3, name="deployed"),
-    Status(id=4, name="completed"),
-    Status(id=5, name="failed"),
+    Status(id=1, name="pending approval"),
+    Status(id=2, name="experiment queued"),
+    Status(id=3, name="experiment completed"),
+    Status(id=4, name="failed"),
 ]
 
 
@@ -87,13 +86,15 @@ class UserData:
 
 @dataclass
 class ExperimentData:
-    user_id: Optional[int]
     name: str
     description: str
     status: str
     payload: str = ''
+    notes: Optional[str] = None
     user_email: Optional[str] = None
     created_at: Optional[str] = None
+    experimentType: Optional[str] = None
+    ModulesNeeded: Optional[str] = None
 
 
 @dataclass
