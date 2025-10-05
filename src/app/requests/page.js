@@ -47,12 +47,8 @@ export default function RequestsPage() {
       })
       .then((data) => {
         console.log("Received data:", data);
-        // Only keep pending approval requests
-        const pendingApproval = Array.isArray(data)
-          ? data.filter((r) => r.status === "pending approval")
-          : [];
-        console.log("Filtered pending approval requests:", pendingApproval);
-        setRequests(pendingApproval);
+        // Store all requests and let the status filter handle filtering
+        setRequests(Array.isArray(data) ? data : []);
       })
       .catch((error) => {
         console.error("Error fetching experiments:", error);
