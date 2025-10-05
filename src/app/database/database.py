@@ -22,6 +22,16 @@ def with_db_session(func):
             conn.close()
     return wrapper
 
+# Update confirmation status and notes for an experiment
+@with_db_session
+def update_experiment_confirmation(cur: sqlite3.Cursor, experiment_id: int, confirmed: int, confirmation_notes: str):
+    cur.execute("""
+        UPDATE experiments
+        SET confirmed = ?, confirmation_notes = ?
+        WHERE id = ?;
+    """, (confirmed, confirmation_notes, experiment_id))
+    return cur.rowcount
+
 @with_db_session
 def drop_users_table(cur: sqlite3.Cursor):
     cur.execute("DROP TABLE IF EXISTS users;")
@@ -215,9 +225,9 @@ def save_experiment(cur: sqlite3.Cursor, experimentdata: ExperimentData):
         return "Invalid Data"
     cur.execute(f"""
         INSERT INTO experiments
-        (user_id, name, description, status, payload)
+        (user_id, name, description, status, payload, user_email, created_at)
         VALUES
-        (:user_id, :name, :description, :status, :payload);
+        (:user_id, :name, :description, :status, :payload, :user_email, :created_at);
 
     """, asdict(experimentdata)
     )
@@ -273,7 +283,7 @@ def delete_payload_builder(cur: sqlite3.Cursor, builder_id: int):
 @with_db_session
 def get_all_experiments(cur: sqlite3.Cursor):
     # Fetch experiments
-    cur.execute("SELECT id, user_id, name, description, status, payload FROM experiments ORDER BY id DESC")
+    cur.execute("SELECT id, user_id, name, description, status, payload, confirmed, confirmation_notes, user_email, created_at FROM experiments ORDER BY id DESC")
     ex_rows = cur.fetchall()
     results = []
     for ex in ex_rows:
@@ -287,6 +297,10 @@ def get_all_experiments(cur: sqlite3.Cursor):
             'description': ex['description'],
             'status': ex['status'],
             'payload': ex['payload'],
+            'confirmed': ex['confirmed'],
+            'confirmation_notes': ex['confirmation_notes'],
+            'user_email': ex['user_email'],
+            'created_at': ex['created_at'],
             'files': files
         })
     return results

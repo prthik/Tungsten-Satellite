@@ -33,7 +33,10 @@ def main():
         # Map 'credits' to 'credits_available' if present
         if 'credits' in user:
             user['credits_available'] = user.pop('credits')
-        user_obj = UserData(**user)
+        # Filter out any fields that aren't in UserData
+        allowed_fields = set(UserData.__dataclass_fields__.keys())
+        filtered_user = {k: v for k, v in user.items() if k in allowed_fields}
+        user_obj = UserData(**filtered_user)
         save_user_data(user_obj)
 
     # SubscriptionPlan
@@ -96,7 +99,15 @@ def main():
         user_id = None
     payload_str = json.dumps(payload)
     from data import ExperimentData
-    exp_obj = ExperimentData(user_id=user_id, name=exp.get('name', ''), description=exp.get('description', ''), status=exp.get('status', 'new'), payload=payload_str)
+    exp_obj = ExperimentData(
+        user_id=user_id,
+        name=exp.get('name', ''),
+        description=exp.get('description', ''),
+        status=exp.get('status', 'new'),
+        payload=payload_str,
+        user_email=exp.get('user_email'),
+        created_at=exp.get('created_at')
+    )
     exp_id = save_experiment(exp_obj)
 
     # ExperimentFileData

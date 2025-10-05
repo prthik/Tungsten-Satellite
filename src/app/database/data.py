@@ -82,6 +82,7 @@ class UserData:
     api_key_hash: bytes
     credits_available: int = 0
     subscriptionplan_id: int = 0
+    email: Optional[str] = None
 
 
 @dataclass
@@ -91,6 +92,8 @@ class ExperimentData:
     description: str
     status: str
     payload: str = ''
+    user_email: Optional[str] = None
+    created_at: Optional[str] = None
 
 
 @dataclass
