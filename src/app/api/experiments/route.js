@@ -5,7 +5,6 @@ import path from "path";
 export async function POST(req) {
   try {
     const body = await req.json();
-    // Call python CLI with JSON via stdin
     const scriptPath = path.join(
       process.cwd(),
       "src",
@@ -13,19 +12,11 @@ export async function POST(req) {
       "database",
       "cli.py"
     );
-
     const py = spawn("python", [scriptPath]);
-
     let stdout = "";
     let stderr = "";
-
-    py.stdout.on("data", (data) => {
-      stdout += data.toString();
-    });
-    py.stderr.on("data", (data) => {
-      stderr += data.toString();
-    });
-
+    py.stdout.on("data", (data) => { stdout += data.toString(); });
+    py.stderr.on("data", (data) => { stderr += data.toString(); });
     const promise = new Promise((resolve, reject) => {
       py.on("close", (code) => {
         if (code === 0) resolve({ stdout, stderr });
@@ -33,19 +24,20 @@ export async function POST(req) {
       });
       py.on("error", (err) => reject(err));
     });
-
     // Write JSON to stdin
     py.stdin.write(JSON.stringify(body));
     py.stdin.end();
-
-    await promise;
-
-    // Try to parse stdout from the python CLI and forward it
+    try {
+      await promise;
+    } catch (err) {
+      // Log and return stderr for debugging
+      return NextResponse.json({ ok: false, error: String(err), stderr }, { status: 500 });
+    }
     let parsed;
     try {
       parsed = stdout ? JSON.parse(stdout) : { ok: true };
     } catch (err) {
-      parsed = { ok: false, error: "Invalid JSON from backend", raw: stdout };
+      parsed = { ok: false, error: "Invalid JSON from backend", raw: stdout, stderr };
     }
     return NextResponse.json(parsed);
   } catch (err) {
