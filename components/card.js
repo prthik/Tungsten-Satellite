@@ -560,12 +560,17 @@ export function AboutProjectCard() {
   );
 }
 
-export function ContactCard({ onSubmit, message, onMessageChange, sent }) {
+export function ContactCard({ onSubmit, message, onMessageChange, sent, userEmail }) {
   return (
     <Card title="Contact Us">
       <p className="mb-6 text-neutral-400">
-        Have questions, feedback, or want to get in touch? Fill out the form below or email us at <a href="mailto:info@tungsten-sat.org" className="text-emerald-400 underline">info@tungsten-sat.org</a>.
+        Have questions, feedback, or want to get in touch? Fill out the form below.
       </p>
+      {userEmail && (
+        <div className="mb-4 text-sm text-neutral-400">
+          Your email: <span className="text-emerald-400">{userEmail}</span>
+        </div>
+      )}
       {sent ? (
         <div className="text-emerald-400 font-semibold">Thank you for your message!</div>
       ) : (

@@ -1,18 +1,33 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ContactCard } from "../../../components/card";
+import { auth } from "../../lib/firebaseClient";
 
 export default function ContactPage() {
   const [message, setMessage] = useState("");
   const [sent, setSent] = useState(false);
+  const [userEmail, setUserEmail] = useState("");
 
-  function handleMessageChange(e) {
-    setMessage(e.target.value);
-  }
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setUserEmail(user?.email || "");
+    });
+    return () => unsubscribe();
+  }, []);
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
+    if (!userEmail) {
+      alert("You must be logged in to send a message.");
+      return;
+    }
+    // Send to API route (not implemented here)
+    await fetch("/api/contact", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: userEmail, message }),
+    });
     setSent(true);
   }
 
@@ -22,8 +37,9 @@ export default function ContactPage() {
         <ContactCard
           onSubmit={handleSubmit}
           message={message}
-          onMessageChange={handleMessageChange}
+          onMessageChange={(e) => setMessage(e.target.value)}
           sent={sent}
+          userEmail={userEmail}
         />
       </div>
     </div>
