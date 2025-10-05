@@ -87,7 +87,7 @@ export default function Profile() {
       }
     });
     return () => unsub();
-  }, [router]);
+  }, [router, updateAdminUI]);
 
   function friendlyMessage(code, message) {
     if (!code) return message;

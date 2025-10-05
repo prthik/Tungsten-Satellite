@@ -560,7 +560,7 @@ export default function DashboardPage() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [selectedId, bayWidth, bayHeight, payloadItems]);
+  }, [selectedId, bayWidth, bayHeight, payloadItems, moveSelected, removeSelected]);
 
   // Plan options for dropdown
   const planOptions = [

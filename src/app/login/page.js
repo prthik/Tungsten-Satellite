@@ -157,7 +157,7 @@ export default function Page() {
           <div className="mt-4 text-sm text-neutral-400">
             {mode === "login" ? (
               <>
-                Don't have an account?{" "}
+                Don&apos;t have an account?{" "}
                 <button
                   onClick={() => setMode("register")}
                   className="text-indigo-300 hover:underline ml-1"
