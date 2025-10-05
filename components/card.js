@@ -173,13 +173,43 @@ export default function Card({ title, subtitle, number, children }) {
 
 // Dashboard UI Components (moved from dashboard/page.js)
 
-export function Header({ tier, credits, onBuy, onChangeTier }) {
+export function Header({ tier, credits, credits_available, onBuy, onChangeTier, planOptions, subscriptionPlan }) {
   const [open, setOpen] = useState(false);
-  const options = [
-    { name: "Free", perks: "Basic access" },
-    { name: "Pro", perks: "More credits, advanced features" },
-    { name: "Enterprise", perks: "Custom solutions" }
-  ];
+  const dropdownRef = useRef(null);
+
+  // Close dropdown if clicked outside
+  React.useEffect(() => {
+    if (!open) return;
+    function handleClick(e) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [open]);
+  // Fallback planOptions if not provided
+  const loadedPlanOptions = Array.isArray(planOptions) && planOptions.length > 0
+    ? planOptions
+    : [
+        { id: 1, name: "Free", perks: "Basic access" },
+        { id: 2, name: "Pro", perks: "More credits, advanced features" },
+        { id: 3, name: "Enterprise", perks: "Custom solutions" }
+      ];
+
+  // Helper to get selected plan option id for submission
+  function getSelectedPlanOptionId() {
+    // If plan_option_id is set and valid, use it
+    if (subscriptionPlan && typeof subscriptionPlan.plan_option_id !== 'undefined' && subscriptionPlan.plan_option_id && subscriptionPlan.plan_option_id !== '' && subscriptionPlan.plan_option_id !== 0) {
+      return subscriptionPlan.plan_option_id;
+    }
+    // Otherwise, default to first available plan option
+    if (loadedPlanOptions.length > 0) {
+      return loadedPlanOptions[0].id;
+    }
+    // If no plan options, return a fallback value (should never happen)
+    return 1;
+  }
   return (
     <Card title="Mission Control Dashboard" subtitle="Design experiments, manage credits, and pack your education satellite payload.">
       <div className="flex flex-wrap items-center gap-4 mt-4">
@@ -192,10 +222,10 @@ export function Header({ tier, credits, onBuy, onChangeTier }) {
             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
           </button>
           {open && (
-            <div className="absolute left-0 mt-2 w-48 rounded-lg bg-neutral-900 border border-neutral-700 shadow-lg z-10">
-              {options.map((p) => (
+            <div ref={dropdownRef} className="absolute left-0 mt-2 w-48 rounded-lg bg-neutral-900 border border-neutral-700 shadow-lg z-10">
+              {loadedPlanOptions.map((p) => (
                 <button
-                  key={p.name}
+                  key={p.id}
                   onClick={() => { setOpen(false); onChangeTier(p.name); }}
                   className={`w-full text-left px-4 py-2 text-base ${tier === p.name ? "bg-emerald-600/20 text-emerald-200" : "hover:bg-neutral-800 text-neutral-200"}`}
                   title={p.perks}
@@ -206,9 +236,9 @@ export function Header({ tier, credits, onBuy, onChangeTier }) {
             </div>
           )}
         </div>
-        <span className="rounded-xl bg-neutral-700 px-3 py-1 text-sm">Credits: <strong>{credits}</strong></span>
+        <span className="rounded-xl bg-neutral-700 px-3 py-1 text-sm">Credits: <strong>{typeof credits_available !== 'undefined' ? credits_available : credits}</strong></span>
         <button onClick={onBuy} className="rounded-xl bg-indigo-500 px-4 py-2 text-sm font-medium hover:bg-indigo-400 focus:outline-none">
-          Buy 200 Credits
+          Buy {subscriptionPlan?.credits_to_buy || 200} Credits
         </button>
       </div>
     </Card>

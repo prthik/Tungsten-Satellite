@@ -1,5 +1,50 @@
+# Static table for experiment/request statuses
+
+from dataclasses import dataclass, field
+from typing import Optional, List
+
+@dataclass
+class Status:
+    id: int
+    name: str
+
+# Predefined status options
+STATUS_OPTIONS = [
+    Status(id=1, name="submitted"),
+    Status(id=2, name="queued"),
+    Status(id=3, name="deployed"),
+    Status(id=4, name="completed"),
+    Status(id=5, name="failed"),
+]
+
+
 # Static table for module types
-from dataclasses import dataclass
+    
+
+@dataclass
+class PlanOption:
+    id: int
+    name: str
+    perks: str
+
+
+@dataclass
+class SubscriptionPlan:
+    id: Optional[int] = None
+    credits_to_buy: int = 200
+    plan_option_id: Optional[int] = None
+
+    def __post_init__(self):
+        # Require plan_option_id to be set and valid (not None, not 0, not empty string)
+        if self.plan_option_id in [None, '', 0]:
+            raise ValueError("plan_option_id is required if a plan option is selected")
+
+@dataclass
+class UserSubscription:
+    id: Optional[int] = None
+    user_id: int = 0
+    plan_id: int = 0
+    credits_available: int = 0
 
 @dataclass
 class ModuleType:
@@ -16,6 +61,7 @@ class PayloadBuilderData:
     bay_height: int
     created_at: str
     items: List['PayloadBuilderItemData']
+    subscription_plan_id: int
 
 @dataclass
 class PayloadBuilderItemData:
@@ -34,7 +80,8 @@ class UserData:
     username: str
     pwd_hash: bytes
     api_key_hash: bytes
-    credits: int = 0
+    credits_available: int = 0
+    subscriptionplan_id: int = 0
 
 
 @dataclass

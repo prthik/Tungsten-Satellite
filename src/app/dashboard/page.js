@@ -1,4 +1,3 @@
-
 "use client";
 
 
@@ -13,6 +12,13 @@ import Card, { Header, Badge, RequestForm, SubscriptionCard, ExperimentCard, Req
 
 export default function DashboardPage() {
   // --- Request Form State ---
+  // SubscriptionPlan State
+  const [subscriptionPlan, setSubscriptionPlan] = useState({
+    name: "",
+    price: 0,
+    features: "",
+    status: "active"
+  });
 
 
   // --- Request Form State ---
@@ -30,6 +36,9 @@ export default function DashboardPage() {
     ModulesNeeded: ""
   });
   const [experimentFiles, setExperimentFiles] = useState([]);
+  // Dashboard plan and credits
+  const [dashboardPlan, setDashboardPlan] = useState("Free");
+  const [dashboardCredits, setDashboardCredits] = useState(250);
 
   // Helper: check if all fields are filled for both forms
   const allRequestFieldsFilled = form.material && form.amount && form.unit && form.priority;
@@ -41,7 +50,7 @@ export default function DashboardPage() {
     if (!canSubmit) return;
     handleFormSubmit(e);
 
-    // Build payload for all tables
+    // Build payload for all tables, including dashboard plan and credits
     const payload = {
       experiment: {
         user_id: null,
@@ -50,6 +59,12 @@ export default function DashboardPage() {
         status: 'new',
         experimentType: experiment.experimentType,
         ModulesNeeded: experiment.ModulesNeeded
+      },
+      subscription_plan: {
+        name: subscriptionPlan.name,
+        price: subscriptionPlan.price,
+        features: subscriptionPlan.features,
+        status: subscriptionPlan.status
       },
       files: experimentFiles.map(f => ({ filename: f.name, data: f.base64 || '' })),
       payload_builder: {
@@ -76,7 +91,7 @@ export default function DashboardPage() {
         username: 'demo',
         pwd_hash: '',
         api_key_hash: '',
-        credits: 0
+        credits: dashboardCredits
       },
       modules: [
         { name: 'Camera', w: 2, h: 2, massKg: 3.2 },
@@ -84,7 +99,9 @@ export default function DashboardPage() {
         { name: 'Comms', w: 2, h: 1, massKg: 1.1 },
         { name: 'Battery', w: 1, h: 2, massKg: 2.4 },
         { name: 'AI Module', w: 2, h: 2, massKg: 2.7 }
-      ]
+      ],
+      dashboard_plan: dashboardPlan,
+      dashboard_credits: dashboardCredits
     };
     try {
       const res = await fetch('/api/experiments', {
@@ -98,43 +115,43 @@ export default function DashboardPage() {
         setExperiment({ experimentName: '', description: '', experimentType: '', ModulesNeeded: '' });
         setExperimentFiles([]);
       } else {
-  // Show error in a scrollable modal for long error messages
-  const errorMsg = 'Failed to save: ' + (data.error || 'unknown error');
-  const modal = document.createElement('div');
-  modal.style.position = 'fixed';
-  modal.style.top = '0';
-  modal.style.left = '0';
-  modal.style.width = '100vw';
-  modal.style.height = '100vh';
-  modal.style.background = 'rgba(0,0,0,0.6)';
-  modal.style.display = 'flex';
-  modal.style.alignItems = 'center';
-  modal.style.justifyContent = 'center';
-  modal.style.zIndex = '9999';
-  const inner = document.createElement('div');
-  inner.style.background = '#222';
-  inner.style.color = '#fff';
-  inner.style.padding = '2rem';
-  inner.style.borderRadius = '1rem';
-  inner.style.maxWidth = '90vw';
-  inner.style.maxHeight = '60vh';
-  inner.style.overflowY = 'auto';
-  inner.style.fontSize = '1rem';
-  inner.innerText = errorMsg;
-  const closeBtn = document.createElement('button');
-  closeBtn.innerText = 'Close';
-  closeBtn.style.marginTop = '1rem';
-  closeBtn.style.background = '#444';
-  closeBtn.style.color = '#fff';
-  closeBtn.style.padding = '0.5rem 1.5rem';
-  closeBtn.style.border = 'none';
-  closeBtn.style.borderRadius = '0.5rem';
-  closeBtn.style.cursor = 'pointer';
-  closeBtn.onclick = () => document.body.removeChild(modal);
-  inner.appendChild(document.createElement('br'));
-  inner.appendChild(closeBtn);
-  modal.appendChild(inner);
-  document.body.appendChild(modal);
+        // Show error in a scrollable modal for long error messages
+        const errorMsg = 'Failed to save: ' + (data.error || 'unknown error');
+        const modal = document.createElement('div');
+        modal.style.position = 'fixed';
+        modal.style.top = '0';
+        modal.style.left = '0';
+        modal.style.width = '100vw';
+        modal.style.height = '100vh';
+        modal.style.background = 'rgba(0,0,0,0.6)';
+        modal.style.display = 'flex';
+        modal.style.alignItems = 'center';
+        modal.style.justifyContent = 'center';
+        modal.style.zIndex = '9999';
+        const inner = document.createElement('div');
+        inner.style.background = '#222';
+        inner.style.color = '#fff';
+        inner.style.padding = '2rem';
+        inner.style.borderRadius = '1rem';
+        inner.style.maxWidth = '90vw';
+        inner.style.maxHeight = '60vh';
+        inner.style.overflowY = 'auto';
+        inner.style.fontSize = '1rem';
+        inner.innerText = errorMsg;
+        const closeBtn = document.createElement('button');
+        closeBtn.innerText = 'Close';
+        closeBtn.style.marginTop = '1rem';
+        closeBtn.style.background = '#444';
+        closeBtn.style.color = '#fff';
+        closeBtn.style.padding = '0.5rem 1.5rem';
+        closeBtn.style.border = 'none';
+        closeBtn.style.borderRadius = '0.5rem';
+        closeBtn.style.cursor = 'pointer';
+        closeBtn.onclick = () => document.body.removeChild(modal);
+        inner.appendChild(document.createElement('br'));
+        inner.appendChild(closeBtn);
+        modal.appendChild(inner);
+        document.body.appendChild(modal);
       }
     } catch (err) {
       alert('Error saving: ' + String(err));
@@ -368,6 +385,22 @@ export default function DashboardPage() {
     return () => window.removeEventListener("keydown", onKey);
   }, [selectedId, bayWidth, bayHeight, payloadItems]);
 
+  // Plan options for dropdown
+  const planOptions = [
+    { id: 1, name: "Free", perks: "Basic access" },
+    { id: 2, name: "Pro", perks: "More credits, advanced features" },
+    { id: 3, name: "Enterprise", perks: "Custom solutions" }
+  ];
+
+  function handleSubscriptionPlanChange(e) {
+    const { name, value } = e.target;
+    setSubscriptionPlan((prev) => ({
+      ...prev,
+      [name]: name === "price" ? Number(value) :
+        name === "plan_option_id" ? Number(value) : value
+    }));
+  }
+
   return (
     <div className="min-h-screen bg-neutral-800 text-white p-8">
       <div className="space-y-8">
@@ -386,7 +419,6 @@ export default function DashboardPage() {
             files={experimentFiles}
             setFiles={setExperimentFiles}
           />
-
         </section>
         <section className="w-full">
           <PayloadBuilder

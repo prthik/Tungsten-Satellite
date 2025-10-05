@@ -1,0 +1,182 @@
+[
+  {
+    "id": 3,
+    "user_id": null,
+    "name": "sd",
+    "description": "sd",
+    "status": "new",
+    "payload": {
+      "experiment": {
+        "user_id": null,
+        "name": "sd",
+        "description": "sd",
+        "status": "new",
+        "experimentType": "sd",
+        "ModulesNeeded": "sd"
+      },
+      "subscription_plan": {
+        "name": "",
+        "price": 0,
+        "features": "",
+        "status": "active"
+      },
+      "files": [],
+      "payload_builder": {
+        "name": "Builder-sd",
+        "bay_width": 8,
+        "bay_height": 5,
+        "items": [
+          {
+            "module_id": 0,
+            "x": 0,
+            "y": 0,
+            "label": "Camera",
+            "massKg": 3.2
+          }
+        ],
+        "created_at": "2025-10-05T05:39:02.225Z"
+      },
+      "builder_items": [
+        {
+          "module_id": 0,
+          "x": 0,
+          "y": 0,
+          "label": "Camera",
+          "massKg": 3.2
+        }
+      ],
+      "user": {
+        "username": "demo",
+        "pwd_hash": "",
+        "api_key_hash": "",
+        "credits_available": 250
+      },
+      "modules": [
+        {"name": "Camera", "w": 2, "h": 2, "massKg": 3.2},
+        {"name": "µLab", "w": 3, "h": 2, "massKg": 5.8},
+        {"name": "Comms", "w": 2, "h": 1, "massKg": 1.1},
+        {"name": "Battery", "w": 1, "h": 2, "massKg": 2.4},
+        {"name": "AI Module", "w": 2, "h": 2, "massKg": 2.7}
+      ],
+      "dashboard_plan": "Free",
+      "dashboard_credits": 250
+    },
+    "files": []
+  },
+  {
+    "id": 2,
+    "user_id": null,
+    "name": "sdf",
+    "description": "sdf",
+    "status": "new",
+    "payload": {
+      "experiment": {
+        "user_id": null,
+        "name": "sdf",
+        "description": "sdf",
+        "status": "new",
+        "experimentType": "ds",
+        "ModulesNeeded": "sdf"
+      },
+      "files": [],
+      "payload_builder": {
+        "name": "Builder-sdf",
+        "bay_width": 8,
+        "bay_height": 5,
+        "items": [
+          {
+            "module_id": 0,
+            "x": 0,
+            "y": 0,
+            "label": "Camera",
+            "massKg": 3.2
+          }
+        ],
+        "created_at": "2025-10-05T04:31:04.393Z"
+      },
+      "builder_items": [
+        {
+          "module_id": 0,
+          "x": 0,
+          "y": 0,
+          "label": "Camera",
+          "massKg": 3.2
+        }
+      ],
+      "user": {
+        "username": "demo",
+        "pwd_hash": "",
+        "api_key_hash": "",
+        "credits_available": 250
+      },
+      "modules": [
+        {"name": "Camera", "w": 2, "h": 2, "massKg": 3.2},
+        {"name": "µLab", "w": 3, "h": 2, "massKg": 5.8},
+        {"name": "Comms", "w": 2, "h": 1, "massKg": 1.1},
+        {"name": "Battery", "w": 1, "h": 2, "massKg": 2.4},
+        {"name": "AI Module", "w": 2, "h": 2, "massKg": 2.7}
+      ],
+      "dashboard_plan": "Free",
+      "dashboard_credits": 250
+    },
+    "files": []
+  },
+  {
+    "id": 1,
+    "user_id": null,
+    "name": "sdf",
+    "description": "sdf",
+    "status": "new",
+    "payload": {
+      "experiment": {
+        "user_id": null,
+        "name": "sdf",
+        "description": "sdf",
+        "status": "new",
+        "experimentType": "sdf",
+        "ModulesNeeded": "sdf"
+      },
+      "files": [],
+      "payload_builder": {
+        "name": "Builder-sdf",
+        "bay_width": 8,
+        "bay_height": 5,
+        "items": [
+          {
+            "module_id": 0,
+            "x": 0,
+            "y": 0,
+            "label": "Camera",
+            "massKg": 3.2
+          }
+        ],
+        "created_at": "2025-10-05T04:24:20.300Z"
+      },
+      "builder_items": [
+        {
+          "module_id": 0,
+          "x": 0,
+          "y": 0,
+          "label": "Camera",
+          "massKg": 3.2
+        }
+      ],
+      "user": {
+        "username": "demo",
+        "pwd_hash": "",
+        "api_key_hash": "",
+        "credits_available": 250
+      },
+      "modules": [
+        {"name": "Camera", "w": 2, "h": 2, "massKg": 3.2},
+        {"name": "µLab", "w": 3, "h": 2, "massKg": 5.8},
+        {"name": "Comms", "w": 2, "h": 1, "massKg": 1.1},
+        {"name": "Battery", "w": 1, "h": 2, "massKg": 2.4},
+        {"name": "AI Module", "w": 2, "h": 2, "massKg": 2.7}
+      ],
+      "dashboard_plan": "Free",
+      "dashboard_credits": 250
+    },
+    "files": []
+  }
+]
