@@ -68,7 +68,7 @@ export default function Navbar() {
       </div>
 
 
-      <div style={{ display: "flex", gap: "20px" }} className="items-center flex">
+      <div style={{ display: "flex", gap: "28px" }} className="items-center flex">
         {/* About link */}
         <Link href="/about" className="text-base text-neutral-300 hover:text-white px-4 py-2 rounded transition-colors">
           About
@@ -77,6 +77,15 @@ export default function Navbar() {
         <Link href="/contact" className="text-base text-neutral-300 hover:text-white px-4 py-2 rounded transition-colors">
           Contact
         </Link>
+        {/* GitHub link */}
+        <a
+          href="https://github.com/prthik/Tungsten-Satellite"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-base text-neutral-300 hover:text-white px-4 py-2 rounded transition-colors"
+        >
+          GitHub
+        </a>
         {/* Profile dropdown */}
         <div ref={ref} className="relative inline-block text-left self-center flex items-center gap-2">
           <button
