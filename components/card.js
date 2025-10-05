@@ -1,6 +1,6 @@
 "use client";
 
-export function Grid({ W, H, items, onCellClick, selectedId }) {
+export function Grid({ W, H, items, onCellClick, selectedId, draggingId, onDragStart, onDragOver, onDragEnd }) {
   // Render background grid cells
   const cells = [];
   for (let y = 0; y < H; y++) {
@@ -23,6 +23,14 @@ export function Grid({ W, H, items, onCellClick, selectedId }) {
     <div
       className="grid h-full w-full"
       style={{ gridTemplateColumns: `repeat(${W}, minmax(0, 1fr))`, gridTemplateRows: `repeat(${H}, minmax(0, 1fr))` }}
+      onDragOver={(e) => {
+        e.preventDefault();
+        onDragOver(e);
+      }}
+      onDrop={(e) => {
+        e.preventDefault();
+        onDragEnd(e);
+      }}
     >
       {cells}
       {items.map((p) => (
@@ -32,11 +40,25 @@ export function Grid({ W, H, items, onCellClick, selectedId }) {
             gridColumn: `${p.x + 1} / span ${p.w}`,
             gridRow: `${p.y + 1} / span ${p.h}`,
           }}
-          className={`relative m-[2px] flex items-center justify-center rounded-lg border text-xs ${
-            selectedId === p.id
+          className={`relative m-[2px] flex items-center justify-center rounded-lg border text-xs cursor-move
+            ${selectedId === p.id
               ? "border-emerald-500 bg-emerald-500/20"
-              : "border-neutral-600 bg-neutral-700/60 hover:border-neutral-500"
-          }`}
+              : "border-neutral-600 bg-neutral-700/60 hover:border-neutral-500"}
+            ${draggingId === p.id ? "opacity-50" : ""}`
+          }
+          draggable="true"
+          onClick={(e) => {
+            e.stopPropagation();
+            onCellClick(p.x, p.y);
+          }}
+          onDragStart={(e) => {
+            e.dataTransfer.setData('text/plain', ''); // Required for Firefox
+            onDragStart(e, p.id);
+          }}
+          onDragEnd={(e) => {
+            e.preventDefault();
+            onDragEnd(e);
+          }}
         >
           <span className="pointer-events-none select-none px-2 text-center text-xs text-white/90">
             {p.label}
@@ -57,8 +79,12 @@ export function PayloadBuilder({
   onBayHeightChange,
   items,
   selectedId,
+  draggingId,
   onCellClick,
   onGridClick,
+  onDragStart,
+  onDragOver,
+  onDragEnd,
   presets,
   onAddPreset,
   usedCells,
@@ -129,6 +155,10 @@ export function PayloadBuilder({
               items={items}
               onCellClick={onCellClick}
               selectedId={selectedId}
+              draggingId={draggingId}
+              onDragStart={onDragStart}
+              onDragOver={onDragOver}
+              onDragEnd={onDragEnd}
             />
           </div>
         </div>
