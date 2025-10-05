@@ -108,7 +108,7 @@ export default function DashboardPage() {
         massKg: item.massKg || 0.0,
       })),
       user: {
-        username: "demo",
+        username: Math.random() < 0.5 ? "NASA" : "SpaceX",
         pwd_hash: "",
         api_key_hash: "",
         credits: dashboardCredits,
