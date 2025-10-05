@@ -245,7 +245,7 @@ export function Header({ tier, credits, credits_available, onBuy, onChangeTier, 
       {showPayment && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
           <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full flex flex-col items-center">
-            <h2 className="text-2xl font-bold mb-4 text-indigo-700">Simulated Payment</h2>
+            <h2 className="text-2xl font-bold mb-4 text-indigo-700">Confirm Payment</h2>
             <p className="mb-4 text-neutral-800">You are about to buy <strong>{subscriptionPlan?.credits_to_buy || 200}</strong> credits for your account.</p>
             <button
               className="bg-indigo-600 text-white px-6 py-2 rounded-lg font-semibold mb-2 hover:bg-indigo-500"
@@ -480,26 +480,9 @@ export function ExperimentCard({
   maxFiles = 5,
   maxSizeMB = 10
 }) {
-  // Submission handler: save experiment and files
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    // Build payload including files
-    const payload = {
-      experiment,
-      files: files.map(f => ({ filename: f.name, data: f.base64 }))
-    };
-    // Example: send to backend
-    await fetch('/api/experiments', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-    // Optionally clear files after submit
-    setFiles([]);
-  };
   return (
     <Card title={"Request Experiments"} subtitle={"Enter required programming and experiment data. "}>
-      <form className="flex flex-col gap-4 w-full" onSubmit={handleSubmit}>
+      <form className="flex flex-col gap-4 w-full" onSubmit={e => e.preventDefault()}>
         <div className="flex flex-col">
           <label htmlFor="experimentName" className="mb-2 font-semibold">Experiment Name</label>
           <input
@@ -549,7 +532,7 @@ export function ExperimentCard({
           ></textarea>
         </div>
         <FileUpload MAX_FILES={maxFiles} MAX_SIZE_MB={maxSizeMB} files={files} setFiles={setFiles} />
-        <button type="submit" className="mt-4 px-4 py-2 bg-blue-600 text-white rounded">Submit Experiment</button>
+        {/* Submit button removed; submission handled in dashboard/page.js */}
       </form>
     </Card>
   );
