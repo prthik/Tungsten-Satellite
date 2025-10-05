@@ -185,23 +185,6 @@ def delete_user_subscription(cur: sqlite3.Cursor, user_id: int):
     cur.execute("DELETE FROM user_subscriptions WHERE user_id=?", (user_id,))
     return cur.rowcount
 
-    @staticmethod
-    def seed_options(cur):
-        for opt in DashboardOptions.DEFAULT_OPTIONS:
-            cur.execute("""
-            CREATE TABLE IF NOT EXISTS experiments (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id INTEGER, 
-                name TEXT, 
-                description TEXT,
-                status TEXT,
-                status_option_id INTEGER,
-                payload TEXT,
-                user_email TEXT,
-                created_at TEXT,
-                FOREIGN KEY(user_id) REFERENCES users(id)
-            );""")
-
 # CRUD for plan options
 @with_db_session
 def create_plan_option(cur: sqlite3.Cursor, option: PlanOption):
