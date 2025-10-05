@@ -1,6 +1,6 @@
 "use client";
 
-export function Grid({ W, H, items, onCellClick, selectedId }) {
+export function Grid({ W, H, items, onCellClick, selectedId, draggingId, onDragStart, onDragOver, onDragEnd }) {
   // Render background grid cells
   const cells = [];
   for (let y = 0; y < H; y++) {
@@ -23,6 +23,14 @@ export function Grid({ W, H, items, onCellClick, selectedId }) {
     <div
       className="grid h-full w-full"
       style={{ gridTemplateColumns: `repeat(${W}, minmax(0, 1fr))`, gridTemplateRows: `repeat(${H}, minmax(0, 1fr))` }}
+      onDragOver={(e) => {
+        e.preventDefault();
+        onDragOver(e);
+      }}
+      onDrop={(e) => {
+        e.preventDefault();
+        onDragEnd(e);
+      }}
     >
       {cells}
       {items.map((p) => (
@@ -32,11 +40,25 @@ export function Grid({ W, H, items, onCellClick, selectedId }) {
             gridColumn: `${p.x + 1} / span ${p.w}`,
             gridRow: `${p.y + 1} / span ${p.h}`,
           }}
-          className={`relative m-[2px] flex items-center justify-center rounded-lg border text-xs ${
-            selectedId === p.id
+          className={`relative m-[2px] flex items-center justify-center rounded-lg border text-xs cursor-move
+            ${selectedId === p.id
               ? "border-emerald-500 bg-emerald-500/20"
-              : "border-neutral-600 bg-neutral-700/60 hover:border-neutral-500"
-          }`}
+              : "border-neutral-600 bg-neutral-700/60 hover:border-neutral-500"}
+            ${draggingId === p.id ? "opacity-50" : ""}`
+          }
+          draggable="true"
+          onClick={(e) => {
+            e.stopPropagation();
+            onCellClick(p.x, p.y);
+          }}
+          onDragStart={(e) => {
+            e.dataTransfer.setData('text/plain', ''); // Required for Firefox
+            onDragStart(e, p.id);
+          }}
+          onDragEnd={(e) => {
+            e.preventDefault();
+            onDragEnd(e);
+          }}
         >
           <span className="pointer-events-none select-none px-2 text-center text-xs text-white/90">
             {p.label}
@@ -57,8 +79,12 @@ export function PayloadBuilder({
   onBayHeightChange,
   items,
   selectedId,
+  draggingId,
   onCellClick,
   onGridClick,
+  onDragStart,
+  onDragOver,
+  onDragEnd,
   presets,
   onAddPreset,
   usedCells,
@@ -130,6 +156,10 @@ export function PayloadBuilder({
               items={items}
               onCellClick={onCellClick}
               selectedId={selectedId}
+              draggingId={draggingId}
+              onDragStart={onDragStart}
+              onDragOver={onDragOver}
+              onDragEnd={onDragEnd}
             />
           </div>
         </div>
@@ -565,6 +595,41 @@ export function AboutProjectCard() {
       <div className="text-base text-neutral-200 p-2 w-full max-w-4xl mx-auto">
         Tungsten Orbit is a solar system modeling application that allows users to see major objects in the solar system and learn facts about them, including orbit path, classification, and more. We use real-time NASA data libraries to provide accurate orbital layouts for educational and informational purposes. Our goal was to create a user-friendly program that was easy to understand and fun. We hope you enjoy our program!
       </div>
+    </Card>
+  );
+}
+
+export function ContactCard({ onSubmit, message, onMessageChange, sent, userEmail, onSendAnother }) {
+  return (
+    <Card title="Contact Us">
+      <p className="mb-6 text-neutral-400">
+        Have questions, feedback, or want to get in touch? Fill out the form below.
+      </p>
+      {userEmail && (
+        <div className="mb-4 text-sm text-neutral-400">
+          Your email: <span className="text-emerald-400">{userEmail}</span>
+        </div>
+      )}
+      {sent ? (
+        <div className="flex flex-col items-start gap-4">
+          <div className="text-emerald-400 font-semibold">Thank you for your message!</div>
+          <button
+            className="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-2 px-4 rounded transition"
+            onClick={onSendAnother}
+            type="button"
+          >
+            Send another message
+          </button>
+        </div>
+      ) : (
+        <form className="flex flex-col gap-4" onSubmit={onSubmit}>
+          <div className="flex flex-col">
+            <label htmlFor="message" className="mb-1 font-semibold">Message</label>
+            <textarea id="message" name="message" rows={5} className="p-2 border border-neutral-700 rounded bg-neutral-900 text-white" required value={message} onChange={onMessageChange}></textarea>
+          </div>
+          <button type="submit" className="mt-2 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-2 px-4 rounded transition">Send Message</button>
+        </form>
+      )}
     </Card>
   );
 }

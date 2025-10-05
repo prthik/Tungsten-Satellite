@@ -90,11 +90,28 @@ export default function DashboardPage() {
   async function handleCombinedSubmit(e) {
     e.preventDefault();
     if (!canSubmit) return;
-    handleFormSubmit(e);
+
+    // Calculate total cost
+    const experimentCost = 50; // base cost for experiment
+    const priorityCost =
+      form.priority === "Urgent" ? 50 : form.priority === "High" ? 25 : 0;
+    const totalCost = experimentCost + priorityCost;
+
+    // Check if user has enough credits
+    if (dashboardCredits < totalCost) {
+      alert(
+        `Not enough credits. This request costs ${totalCost} credits. You have ${dashboardCredits} credits.`
+      );
+      return;
+    }
 
     // Get user email from Firebase auth
     const user = auth.currentUser;
     const userEmail = user?.email || "";
+
+    // Deduct credits
+    const newCredits = dashboardCredits - totalCost;
+    setDashboardCredits(newCredits);
 
     // Build payload for all tables, including dashboard plan and credits
     const payload = {
@@ -141,8 +158,8 @@ export default function DashboardPage() {
         username: Math.random() < 0.5 ? "NASA" : "SpaceX",
         pwd_hash: "",
         api_key_hash: "",
-        credits: dashboardCredits,
-        email: userEmail, // <-- add email here too if needed
+        credits: newCredits, // Store updated credits
+        email: userEmail,
       },
       modules: payloadPresets.map(m => ({
         name: m.name || m.label,
@@ -151,7 +168,7 @@ export default function DashboardPage() {
         massKg: m.massKg
       })),
       dashboard_plan: dashboardPlan,
-      dashboard_credits: dashboardCredits,
+      dashboard_credits: newCredits, // Store updated credits
     };
     try {
       const res = await fetch("/api/experiments", {
@@ -243,6 +260,8 @@ export default function DashboardPage() {
   const [bayHeight, setBayHeight] = useState(5); // grid rows
   const [payloadItems, setPayloadItems] = useState([]); // { id, w, h, x, y, label, massKg }
   const [selectedId, setSelectedId] = useState(null);
+  const [draggingId, setDraggingId] = useState(null);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
 
   // Derived value: is any payload item selected?
   const showSelected = !!selectedId;
@@ -260,12 +279,85 @@ export default function DashboardPage() {
   function handleGridClick(e) {
     if (e.target.classList.contains("aspect-[2/1]")) setSelectedId(null);
   }
+
+  function handleDragStart(e, id) {
+    const item = payloadItems.find(p => p.id === id);
+    if (!item) return;
+
+    // Calculate drag offset relative to the item's top-left corner
+    const rect = e.currentTarget.getBoundingClientRect();
+    const offsetX = (e.clientX - rect.left) / rect.width;
+    const offsetY = (e.clientY - rect.top) / rect.height;
+    
+    setDragOffset({ x: offsetX, y: offsetY });
+    setDraggingId(id);
+    setSelectedId(id);
+  }
+
+  function handleDragOver(e) {
+    if (!draggingId) return;
+
+    const item = payloadItems.find(p => p.id === draggingId);
+    if (!item) return;
+
+    const gridRect = e.currentTarget.getBoundingClientRect();
+    const cellWidth = gridRect.width / bayWidth;
+    const cellHeight = gridRect.height / bayHeight;
+
+    // Calculate grid position accounting for the drag offset
+    const rawX = (e.clientX - gridRect.left - (dragOffset.x * item.w * cellWidth)) / cellWidth;
+    const rawY = (e.clientY - gridRect.top - (dragOffset.y * item.h * cellHeight)) / cellHeight;
+    
+    // Round to nearest grid position
+    const x = Math.round(rawX);
+    const y = Math.round(rawY);
+
+    setPayloadItems(ps => {
+      return ps.map(p => {
+        if (p.id !== draggingId) return p;
+        
+        // Ensure we stay within bounds
+        const nx = Math.max(0, Math.min(bayWidth - p.w, x));
+        const ny = Math.max(0, Math.min(bayHeight - p.h, y));
+
+        // Check collision with others
+        const others = ps.filter(o => o.id !== draggingId);
+        const blocked = others.some(o =>
+          rectsOverlap(nx, ny, p.w, p.h, o.x, o.y, o.w, o.h)
+        );
+        
+        if (blocked) return p;
+        if (nx === p.x && ny === p.y) return p; // Don't update if position hasn't changed
+        return { ...p, x: nx, y: ny };
+      });
+    });
+  }
+
+  function handleDragEnd() {
+    setDraggingId(null);
+  }
+
+  // Update cell click to select items directly
+  function handleCellClick(x, y) {
+    const found = [...payloadItems]
+      .reverse()
+      .find((p) => x >= p.x && x < p.x + p.w && y >= p.y && y < p.y + p.h);
+      
+    // If we click an item, select it. If we click again on the same item, deselect it
+    if (found && found.id === selectedId) {
+      setSelectedId(null);
+    } else {
+      setSelectedId(found?.id ?? null);
+    }
+  }
+
   function handleCellClick(x, y) {
     const found = [...payloadItems]
       .reverse()
       .find((p) => x >= p.x && x < p.x + p.w && y >= p.y && y < p.y + p.h);
     setSelectedId(found?.id ?? null);
   }
+
   function handleMoveSelected(dx, dy) {
     if (!selectedId) return;
     setPayloadItems((ps) => {
@@ -522,8 +614,12 @@ export default function DashboardPage() {
             onBayHeightChange={handleBayHeightChange}
             items={payloadItems}
             selectedId={selectedId}
+            draggingId={draggingId}
             onCellClick={handleCellClick}
             onGridClick={handleGridClick}
+            onDragStart={handleDragStart}
+            onDragOver={handleDragOver}
+            onDragEnd={handleDragEnd}
             presets={payloadPresets}
             selectedPlanOptionId={planOptionId}
             onFetchPresets={fetchPresets}
