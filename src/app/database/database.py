@@ -173,16 +173,19 @@ def delete_user_subscription(cur: sqlite3.Cursor, user_id: int):
     @staticmethod
     def seed_options(cur):
         for opt in DashboardOptions.DEFAULT_OPTIONS:
-            cur.execute(
-                "INSERT OR IGNORE INTO plan_options (name, perks) VALUES (?, ?)",
-                (opt.name, opt.perks)
-            )
-
-    @staticmethod
-    def get_options(cur):
-        cur.execute("SELECT id, name, perks FROM plan_options ORDER BY id ASC")
-        rows = cur.fetchall()
-        return [PlanOption(**row) for row in rows]
+            cur.execute("""
+            CREATE TABLE IF NOT EXISTS experiments (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER, 
+                name TEXT, 
+                description TEXT,
+                status TEXT,
+                status_option_id INTEGER,
+                payload TEXT,
+                user_email TEXT,
+                created_at TEXT,
+                FOREIGN KEY(user_id) REFERENCES users(id)
+            );""")
 
 # CRUD for plan options
 @with_db_session
@@ -225,10 +228,9 @@ def save_experiment(cur: sqlite3.Cursor, experimentdata: ExperimentData):
         return "Invalid Data"
     cur.execute(f"""
         INSERT INTO experiments
-        (user_id, name, description, status, payload, user_email, created_at)
+        (user_id, name, description, status, status_option_id, payload, user_email, created_at)
         VALUES
-        (:user_id, :name, :description, :status, :payload, :user_email, :created_at);
-
+        (:user_id, :name, :description, :status, :status_option_id, :payload, :user_email, :created_at);
     """, asdict(experimentdata)
     )
     return cur.lastrowid

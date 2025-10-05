@@ -72,7 +72,8 @@ export default function DashboardPage() {
         user_id: null,
         name: experiment.experimentName,
         description: experiment.description,
-        status: "new",
+        status: "pending approval",
+        status_option_id: 1,
         experimentType: experiment.experimentType,
         ModulesNeeded: experiment.ModulesNeeded,
         user_email: userEmail, // Use the correct field name user_email
@@ -109,18 +110,11 @@ export default function DashboardPage() {
         massKg: item.massKg || 0.0,
       })),
       user: {
-<<<<<<< Updated upstream
-        username: "demo",
-        pwd_hash: "",
-        api_key_hash: "",
-        credits: dashboardCredits,
-        email: userEmail, // <-- add email here too if needed
-=======
         username: Math.random() < 0.5 ? 'NASA' : 'SpaceX',
         pwd_hash: '',
         api_key_hash: '',
-        credits: dashboardCredits
->>>>>>> Stashed changes
+        credits: dashboardCredits,
+        email: userEmail, // <-- add email here too if needed
       },
       modules: [
         { name: "Camera", w: 2, h: 2, massKg: 3.2 },

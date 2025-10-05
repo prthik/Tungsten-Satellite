@@ -10,11 +10,10 @@ class Status:
 
 # Predefined status options
 STATUS_OPTIONS = [
-    Status(id=1, name="submitted"),
-    Status(id=2, name="queued"),
-    Status(id=3, name="deployed"),
-    Status(id=4, name="completed"),
-    Status(id=5, name="failed"),
+    Status(id=1, name="pending approval"),
+    Status(id=2, name="approved"),
+    Status(id=3, name="completed"),
+    Status(id=4, name="failed"),
 ]
 
 
@@ -91,6 +90,7 @@ class ExperimentData:
     name: str
     description: str
     status: str
+    status_option_id: int
     payload: str = ''
     user_email: Optional[str] = None
     created_at: Optional[str] = None
