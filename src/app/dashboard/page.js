@@ -5,7 +5,6 @@
 import "../globals.css";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Card, { Header, Badge, RequestForm, SubscriptionCard, ExperimentCard, RequestsTable, PayloadBuilder } from "../../../components/card";
-import ExperimentForm from "../experiments/components/experimentform";
 
 // DASHBOARD PAGE
 // Drop this file at: src/app/dashboard/page.js (or app/dashboard/page.js)
@@ -37,11 +36,109 @@ export default function DashboardPage() {
   const allExperimentFieldsFilled = experiment.experimentName && experiment.description && experiment.experimentType && experiment.ModulesNeeded;
   const canSubmit = allRequestFieldsFilled && allExperimentFieldsFilled;
 
-  function handleCombinedSubmit(e) {
+  async function handleCombinedSubmit(e) {
     e.preventDefault();
     if (!canSubmit) return;
     handleFormSubmit(e);
-    handleExperimentSubmit(e);
+
+    // Build payload for all tables
+    const payload = {
+      experiment: {
+        user_id: null,
+        name: experiment.experimentName,
+        description: experiment.description,
+        status: 'new',
+        experimentType: experiment.experimentType,
+        ModulesNeeded: experiment.ModulesNeeded
+      },
+      files: experimentFiles.map(f => ({ filename: f.name, data: f.base64 || '' })),
+      payload_builder: {
+        name: 'Builder-' + experiment.experimentName,
+        bay_width: bayWidth,
+        bay_height: bayHeight,
+        items: payloadItems.map(item => ({
+          module_id: item.module_id || 0,
+          x: item.x,
+          y: item.y,
+          label: item.label,
+          massKg: item.massKg || 0.0
+        })),
+        created_at: new Date().toISOString()
+      },
+      builder_items: payloadItems.map(item => ({
+        module_id: item.module_id || 0,
+        x: item.x,
+        y: item.y,
+        label: item.label,
+        massKg: item.massKg || 0.0
+      })),
+      user: {
+        username: 'demo',
+        pwd_hash: '',
+        api_key_hash: '',
+        credits: 0
+      },
+      modules: [
+        { name: 'Camera', w: 2, h: 2, massKg: 3.2 },
+        { name: 'µLab', w: 3, h: 2, massKg: 5.8 },
+        { name: 'Comms', w: 2, h: 1, massKg: 1.1 },
+        { name: 'Battery', w: 1, h: 2, massKg: 2.4 },
+        { name: 'AI Module', w: 2, h: 2, massKg: 2.7 }
+      ]
+    };
+    try {
+      const res = await fetch('/api/experiments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (data.ok) {
+        alert('Experiment and related data saved! Experiment ID: ' + data.experiment_id);
+        setExperiment({ experimentName: '', description: '', experimentType: '', ModulesNeeded: '' });
+        setExperimentFiles([]);
+      } else {
+  // Show error in a scrollable modal for long error messages
+  const errorMsg = 'Failed to save: ' + (data.error || 'unknown error');
+  const modal = document.createElement('div');
+  modal.style.position = 'fixed';
+  modal.style.top = '0';
+  modal.style.left = '0';
+  modal.style.width = '100vw';
+  modal.style.height = '100vh';
+  modal.style.background = 'rgba(0,0,0,0.6)';
+  modal.style.display = 'flex';
+  modal.style.alignItems = 'center';
+  modal.style.justifyContent = 'center';
+  modal.style.zIndex = '9999';
+  const inner = document.createElement('div');
+  inner.style.background = '#222';
+  inner.style.color = '#fff';
+  inner.style.padding = '2rem';
+  inner.style.borderRadius = '1rem';
+  inner.style.maxWidth = '90vw';
+  inner.style.maxHeight = '60vh';
+  inner.style.overflowY = 'auto';
+  inner.style.fontSize = '1rem';
+  inner.innerText = errorMsg;
+  const closeBtn = document.createElement('button');
+  closeBtn.innerText = 'Close';
+  closeBtn.style.marginTop = '1rem';
+  closeBtn.style.background = '#444';
+  closeBtn.style.color = '#fff';
+  closeBtn.style.padding = '0.5rem 1.5rem';
+  closeBtn.style.border = 'none';
+  closeBtn.style.borderRadius = '0.5rem';
+  closeBtn.style.cursor = 'pointer';
+  closeBtn.onclick = () => document.body.removeChild(modal);
+  inner.appendChild(document.createElement('br'));
+  inner.appendChild(closeBtn);
+  modal.appendChild(inner);
+  document.body.appendChild(modal);
+      }
+    } catch (err) {
+      alert('Error saving: ' + String(err));
+    }
   }
   // (removed duplicate experiment state)
 
@@ -289,10 +386,7 @@ export default function DashboardPage() {
             files={experimentFiles}
             setFiles={setExperimentFiles}
           />
-          {/* Also render the full ExperimentForm on Dashboard for quick access */}
-          <div className="mt-6">
-            <ExperimentForm />
-          </div>
+
         </section>
         <section className="w-full">
           <PayloadBuilder
@@ -349,4 +443,3 @@ function moveItems(setItems, selectedId, dx, dy, W, H) {
 function removeItem(setItems, id) {
   setItems((ps) => ps.filter((p) => p.id !== id));
 }
-

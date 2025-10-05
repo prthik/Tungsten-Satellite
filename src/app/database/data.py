@@ -1,3 +1,31 @@
+# Static table for module types
+from dataclasses import dataclass
+
+@dataclass
+class ModuleType:
+    id: int
+    name: str
+from dataclasses import dataclass
+from typing import List, Optional
+
+@dataclass
+class PayloadBuilderData:
+    id: Optional[int]
+    name: str
+    bay_width: int
+    bay_height: int
+    created_at: str
+    items: List['PayloadBuilderItemData']
+
+@dataclass
+class PayloadBuilderItemData:
+    id: Optional[int]
+    payload_builder_id: Optional[int]
+    module_id: int
+    x: int
+    y: int
+    label: str
+    massKg: float
 from dataclasses import dataclass
 
 
@@ -11,7 +39,7 @@ class UserData:
 
 @dataclass
 class ExperimentData:
-    user_id: int | None
+    user_id: Optional[int]
     name: str
     description: str
     status: str
@@ -24,44 +52,6 @@ class ExperimentFileData:
     filename: str
     file_data: bytes
 
-
-@dataclass
-class PayloadItemData:
-    module_id: int
-    x: int = 0
-    y: int = 0
-    label: str = ''
-    massKg: float = 0.0
-
-
-@dataclass
-class PayloadBuilderData:
-    # name is optional human label for the builder configuration
-    name: str = ''
-    bay_width: int = 4
-    bay_height: int = 4
-    # items stored as JSON string for easy persistence; frontend should stringify
-    items_json: str = ''
-    created_at: str = ''
-
-
-@dataclass
-class ModuleType:
-    id: int = 0
-    name: str = ''
-    w: int = 1
-    h: int = 1
-    massKg: float = 0.0
-
-
-@dataclass
-class PayloadBuilderItemData:
-    id: int = 0
-    payload_builder_id: int = 0
-    module_id: int = 0
-    x: int = 0
-    y: int = 0
-    label: str = ''
 
 
 

@@ -1,3 +1,23 @@
+# Methods for static module_type table
+import sqlite3
+from data import ModuleType, UserData, ExperimentData, ExperimentFileData, PayloadBuilderData, PayloadBuilderItemData
+
+def get_all_module_types():
+    conn = sqlite3.connect('site.db')
+    cursor = conn.cursor()
+    cursor.execute('SELECT id, name FROM module_type')
+    rows = cursor.fetchall()
+    conn.close()
+    return [ModuleType(id=row[0], name=row[1]) for row in rows]
+
+def add_module_type():
+    conn = sqlite3.connect('site.db')
+    cursor = conn.cursor()
+    modules = ['Camera', 'µLab', 'Comms', 'Battery', 'AI Module', 'Computer', 'Propulsion']
+    for mod in modules:
+        cursor.execute('INSERT INTO module_type (name) VALUES (?)', (mod,))
+    conn.commit()
+    conn.close()
 import sqlite3
 from dataclasses import dataclass, asdict, is_dataclass
 from data import UserData, ExperimentData, ExperimentFileData
@@ -50,15 +70,8 @@ def create_table(cur: sqlite3.Cursor):
         file_data BLOB, 
         FOREIGN KEY(experiment_id) REFERENCES experiments(id)
     );
-
     """)
-    # Ensure payload column exists (SQLite doesn't have ALTER ... IF NOT EXISTS)
-    cur.execute("PRAGMA table_info(experiments)")
-    cols = [r['name'] for r in cur.fetchall()]
-    if 'payload' not in cols:
-        cur.execute("ALTER TABLE experiments ADD COLUMN payload TEXT;")
 
-    # Create payload_builders table if missing
     cur.execute("""
     CREATE TABLE IF NOT EXISTS payload_builders (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -70,7 +83,6 @@ def create_table(cur: sqlite3.Cursor):
     );
     """)
 
-    # Create modules (constant module types) table
     cur.execute("""
     CREATE TABLE IF NOT EXISTS modules (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -81,42 +93,9 @@ def create_table(cur: sqlite3.Cursor):
     );
     """)
 
-    # Create payload_builder_items table linking payload_builders -> modules
-    cur.execute("""
-    CREATE TABLE IF NOT EXISTS payload_builder_items (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        payload_builder_id INTEGER,
-        module_id INTEGER,
-        x INTEGER,
-        y INTEGER,
-        label TEXT,
-        massKg REAL,
-        FOREIGN KEY(payload_builder_id) REFERENCES payload_builders(id),
-        FOREIGN KEY(module_id) REFERENCES modules(id)
-    );
-    """)
-
-    # Seed modules if empty
-    cur.execute("SELECT COUNT(*) as cnt FROM modules")
-    r = cur.fetchone()
-    cnt = r[0] if r else 0
-    if cnt == 0:
-        seed = [
-            ('Camera', 2, 2, 3.2),
-            ('µLab', 3, 2, 5.8),
-            ('Comms', 2, 1, 1.1),
-            ('Battery', 1, 2, 2.4),
-            ('AI Module', 2, 2, 2.7),
-        ]
-        cur.executemany('INSERT INTO modules (name, w, h, massKg) VALUES (?, ?, ?, ?)', seed)
-    
-
 @with_db_session
 def fetch_table_data(cur: sqlite3.Cursor, table: str):
-    cur.execute("""
-        SELECT *
-        FROM ?;
-        """, (table, ))
+    cur.execute(f"SELECT * FROM {table};")
     rows = cur.fetchall()
     return rows
 
@@ -164,6 +143,39 @@ def save_experiment_file(cur: sqlite3.Cursor, experimentfile: ExperimentFileData
     """, asdict(experimentfile)
     )
 
+import json
+# Save a payload builder row and modules
+@with_db_session
+def save_payload_builder(cur: sqlite3.Cursor, builder: dict, modules: list = None):
+    cur.execute("""
+        INSERT INTO payload_builders
+        (name, bay_width, bay_height, items_json, created_at)
+        VALUES
+        (:name, :bay_width, :bay_height, :items_json, :created_at);
+    """, builder)
+    builder_id = cur.lastrowid
+    # Save modules if provided
+    if modules:
+        for mod in modules:
+            cur.execute("""
+                INSERT OR IGNORE INTO modules (name, w, h, massKg)
+                VALUES (?, ?, ?, ?)
+            """, (mod['name'], mod['w'], mod['h'], mod['massKg']))
+    return builder_id
+
+# Get a payload builder by id
+@with_db_session
+def get_payload_builder(cur: sqlite3.Cursor, builder_id: int):
+    cur.execute("SELECT id, name, bay_width, bay_height, items_json, created_at FROM payload_builders WHERE id = ?", (builder_id,))
+    row = cur.fetchone()
+    return dict(row) if row else None
+
+# Delete a payload builder by id
+@with_db_session
+def delete_payload_builder(cur: sqlite3.Cursor, builder_id: int):
+    cur.execute("DELETE FROM payload_builders WHERE id = ?", (builder_id,))
+    return cur.rowcount
+
 
 @with_db_session
 def get_all_experiments(cur: sqlite3.Cursor):
@@ -186,36 +198,22 @@ def get_all_experiments(cur: sqlite3.Cursor):
         })
     return results
 
-
-@with_db_session
-def save_payload_builder(cur: sqlite3.Cursor, builder: dict):
-    # builder: {name, bay_width, bay_height, items_json, created_at}
-    cur.execute("""
-        INSERT INTO payload_builders
-        (name, bay_width, bay_height, items_json, created_at)
-        VALUES
-        (:name, :bay_width, :bay_height, :items_json, :created_at);
-    """, builder)
-    return cur.lastrowid
-
-
-@with_db_session
-def get_all_payload_builders(cur: sqlite3.Cursor):
-    cur.execute("SELECT id, name, bay_width, bay_height, items_json, created_at FROM payload_builders ORDER BY id DESC")
-    rows = cur.fetchall()
-    return [dict(r) for r in rows]
-
-
-@with_db_session
-def get_modules(cur: sqlite3.Cursor):
-    cur.execute('SELECT id, name, w, h, massKg FROM modules ORDER BY id')
-    return [dict(r) for r in cur.fetchall()]
-
-
-@with_db_session
-def get_payload_builder_items(cur: sqlite3.Cursor, builder_id: int):
-    cur.execute('SELECT id, payload_builder_id, module_id, x, y, label, massKg FROM payload_builder_items WHERE payload_builder_id = ? ORDER BY id', (builder_id,))
-    return [dict(r) for r in cur.fetchall()]
-
 if __name__ == '__main__': 
     create_table()
+
+# Cleanup all tables for a fresh database
+@with_db_session
+def cleanup_database(cur: sqlite3.Cursor):
+    cur.execute("DELETE FROM experiment_files;")
+    cur.execute("DELETE FROM experiments;")
+    cur.execute("DELETE FROM payload_builders;")
+    cur.execute("DELETE FROM modules;")
+    cur.execute("DELETE FROM users;")
+    return "Database cleaned."
+
+# Fetch all modules
+@with_db_session
+def get_modules(cur: sqlite3.Cursor):
+    cur.execute("SELECT id, name, w, h, massKg FROM modules ORDER BY id ASC")
+    rows = cur.fetchall()
+    return [dict(row) for row in rows]

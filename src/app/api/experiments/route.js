@@ -31,12 +31,13 @@ export async function POST(req) {
     await promise
 
     // Try to parse stdout from the python CLI and forward it
+    let parsed;
     try {
-      const parsed = stdout ? JSON.parse(stdout) : { ok: true }
-      return NextResponse.json(parsed)
+      parsed = stdout ? JSON.parse(stdout) : { ok: true };
     } catch (err) {
-      return NextResponse.json({ ok: true, raw: stdout })
+      parsed = { ok: false, error: 'Invalid JSON from backend', raw: stdout };
     }
+    return NextResponse.json(parsed);
   } catch (err) {
     return NextResponse.json({ ok: false, error: String(err) }, { status: 500 })
   }
