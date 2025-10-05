@@ -105,12 +105,12 @@ export default function Page() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-800 flex items-center justify-center px-4 py-12">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen bg-neutral-800 flex justify-center px-4 py-12">
+      <div className="w-full max-w-md mt-8">
         <Card>
           <h2
             ref={headingRef}
-            className="text-2xl font-semibold text-white mb-4"
+            className="text-neutral-500 text-2xl font-semibold mb-4"
           >
             {mode === "login" ? "Login" : "Create account"}
           </h2>
@@ -126,7 +126,7 @@ export default function Page() {
                 ref={emailRef}
                 type="email"
                 required
-                className="mt-1 w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="mt-1 w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 placeholder="you@example.com"
               />
             </div>
@@ -140,7 +140,7 @@ export default function Page() {
                 type="password"
                 minLength={6}
                 required
-                className="mt-1 w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="mt-1 w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 placeholder="••••••••"
               />
             </div>
@@ -148,7 +148,7 @@ export default function Page() {
             <button
               ref={submitBtnRef}
               type="submit"
-              className="w-full rounded-lg bg-indigo-500 px-4 py-2 text-sm font-medium hover:bg-indigo-400 focus:outline-none"
+              className="w-full rounded-lg bg-emerald-500 px-4 py-2 text-sm font-medium hover:bg-emerald-400 focus:outline-none"
             >
               {mode === "login" ? "Login" : "Create account"}
             </button>
