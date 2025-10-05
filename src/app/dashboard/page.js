@@ -109,11 +109,18 @@ export default function DashboardPage() {
         massKg: item.massKg || 0.0,
       })),
       user: {
+<<<<<<< Updated upstream
         username: "demo",
         pwd_hash: "",
         api_key_hash: "",
         credits: dashboardCredits,
         email: userEmail, // <-- add email here too if needed
+=======
+        username: Math.random() < 0.5 ? 'NASA' : 'SpaceX',
+        pwd_hash: '',
+        api_key_hash: '',
+        credits: dashboardCredits
+>>>>>>> Stashed changes
       },
       modules: [
         { name: "Camera", w: 2, h: 2, massKg: 3.2 },
