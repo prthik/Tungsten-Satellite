@@ -560,7 +560,7 @@ export function AboutProjectCard() {
   );
 }
 
-export function ContactCard({ onSubmit, message, onMessageChange, sent, userEmail }) {
+export function ContactCard({ onSubmit, message, onMessageChange, sent, userEmail, onSendAnother }) {
   return (
     <Card title="Contact Us">
       <p className="mb-6 text-neutral-400">
@@ -572,7 +572,16 @@ export function ContactCard({ onSubmit, message, onMessageChange, sent, userEmai
         </div>
       )}
       {sent ? (
-        <div className="text-emerald-400 font-semibold">Thank you for your message!</div>
+        <div className="flex flex-col items-start gap-4">
+          <div className="text-emerald-400 font-semibold">Thank you for your message!</div>
+          <button
+            className="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-2 px-4 rounded transition"
+            onClick={onSendAnother}
+            type="button"
+          >
+            Send another message
+          </button>
+        </div>
       ) : (
         <form className="flex flex-col gap-4" onSubmit={onSubmit}>
           <div className="flex flex-col">

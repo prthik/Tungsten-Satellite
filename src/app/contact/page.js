@@ -40,6 +40,10 @@ export default function ContactPage() {
           onMessageChange={(e) => setMessage(e.target.value)}
           sent={sent}
           userEmail={userEmail}
+          onSendAnother={() => {
+            setMessage("");
+            setSent(false);
+          }}
         />
       </div>
     </div>
