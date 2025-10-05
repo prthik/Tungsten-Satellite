@@ -52,20 +52,24 @@ export default function Navbar() {
   // label to show in nav button
   const label = user ? user.displayName || user.email || "Profile" : "Profile";
 
+  // Helper: get admin status from localStorage (client-side prototype)
+  function isAdmin(uid) {
+    if (typeof window === "undefined" || !uid) return false;
+    return !!localStorage.getItem(`isAdmin_${uid}`);
+  }
+
   return (
-    <div className="flex w-full justify-between py-6 px-10 border-b bg-neutral-950 border-neutral-500">
+    <div className="flex w-full justify-between py-6 px-10 border-b bg-neutral-950 border-neutral-500 items-center">
       <div className="text-2xl font-bold flex items-center gap-2">
         <Link href={"/"} className="flex items-center gap-2">
-          <img src="/optimized_cube_favicon.gif" alt="Cube logo" className="w-12 h-12 inline-block align-middle" />
+          <img src="/cube.svg" alt="Cube logo" className="w-12 h-12 inline-block align-middle" />
           <span>Tungsten Satellite</span>
         </Link>
       </div>
 
-      <div style={{ display: "flex", gap: "20px" }}>
-
-
+      <div style={{ display: "flex", gap: "20px" }} className="items-center flex">
         {/* Profile dropdown */}
-        <div ref={ref} className="relative inline-block text-left">
+        <div ref={ref} className="relative inline-block text-left self-center flex items-center gap-2">
           <button
             type="button"
             aria-haspopup="true"
@@ -76,6 +80,12 @@ export default function Navbar() {
             <span className="hover:underline cursor-pointer select-none">
               {label}
             </span>
+            {/* Admin badge (client-side prototype) */}
+            {user && isAdmin(user.uid) && (
+              <span className="inline-flex items-center rounded-lg bg-amber-600/20 px-3 py-1 text-sm text-amber-300 ring-1 ring-inset ring-amber-600/30 ml-2">
+                Admin
+              </span>
+            )}
             <svg
               className={`w-4 h-4 transition-transform ${
                 open ? "rotate-180" : "rotate-0"
