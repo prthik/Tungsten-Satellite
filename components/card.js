@@ -175,6 +175,7 @@ export default function Card({ title, subtitle, number, children }) {
 
 export function Header({ tier, credits, credits_available, onBuy, onChangeTier, planOptions, subscriptionPlan }) {
   const [open, setOpen] = useState(false);
+  const [showPayment, setShowPayment] = useState(false);
   const dropdownRef = useRef(null);
 
   // Close dropdown if clicked outside
@@ -237,10 +238,30 @@ export function Header({ tier, credits, credits_available, onBuy, onChangeTier, 
           )}
         </div>
         <span className="rounded-xl bg-neutral-700 px-3 py-1 text-sm">Credits: <strong>{typeof credits_available !== 'undefined' ? credits_available : credits}</strong></span>
-        <button onClick={onBuy} className="rounded-xl bg-indigo-500 px-4 py-2 text-sm font-medium hover:bg-indigo-400 focus:outline-none">
+        <button onClick={() => setShowPayment(true)} className="rounded-xl bg-indigo-500 px-4 py-2 text-sm font-medium hover:bg-indigo-400 focus:outline-none">
           Buy {subscriptionPlan?.credits_to_buy || 200} Credits
         </button>
       </div>
+      {showPayment && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
+          <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full flex flex-col items-center">
+            <h2 className="text-2xl font-bold mb-4 text-indigo-700">Confirm Payment</h2>
+            <p className="mb-4 text-neutral-800">You are about to buy <strong>{subscriptionPlan?.credits_to_buy || 200}</strong> credits for your account.</p>
+            <button
+              className="bg-indigo-600 text-white px-6 py-2 rounded-lg font-semibold mb-2 hover:bg-indigo-500"
+              onClick={() => { setShowPayment(false); onBuy && onBuy(); }}
+            >
+              Confirm Payment
+            </button>
+            <button
+              className="bg-neutral-300 text-neutral-700 px-6 py-2 rounded-lg font-semibold hover:bg-neutral-200"
+              onClick={() => setShowPayment(false)}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </Card>
   );
 }
@@ -378,21 +399,38 @@ function FileUpload({ MAX_FILES, MAX_SIZE_MB, files, setFiles }) {
     const fileInputRef = useRef();
     const [error, setError] = useState('');
 
-    const handleFiles = (e) => {
-        const selectedFiles = Array.from(e.target.files);
-        if (selectedFiles.length + files.length > MAX_FILES) {
-            setError(`You can upload up to ${MAX_FILES} files.`);
-            return;
-        }
-        for (let file of selectedFiles) {
-            if (file.size > MAX_SIZE_MB * 1024 * 1024) {
-                setError(`Each file must be less than ${MAX_SIZE_MB} MB.`);
-                return;
-            }
-        }
-        setFiles([...files, ...selectedFiles]);
-        setError('');
-    };
+  const handleFiles = async (e) => {
+    const selectedFiles = Array.from(e.target.files);
+    // Enforce max 5 files total
+    if (selectedFiles.length + files.length > 5) {
+      setError('You can upload up to 5 files.');
+      return;
+    }
+    // Enforce each file <= 10MB
+    for (let file of selectedFiles) {
+      if (file.size > 10 * 1024 * 1024) {
+        setError('Each file must be less than 10 MB.');
+        return;
+      }
+    }
+    // Convert files to base64 for saving
+    const filesWithData = await Promise.all(selectedFiles.map(async (file) => {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          resolve({
+            name: file.name,
+            size: file.size,
+            type: file.type,
+            base64: reader.result.split(',')[1] // remove data:...;base64,
+          });
+        };
+        reader.readAsDataURL(file);
+      });
+    }));
+    setFiles([...files, ...filesWithData]);
+    setError('');
+  };
 
     const removeFile = (index) => {
         const newFiles = files.slice();
@@ -403,13 +441,14 @@ function FileUpload({ MAX_FILES, MAX_SIZE_MB, files, setFiles }) {
     return (
         <div className="flex flex-col">
             <label className="mb-2 font-semibold">Upload Files</label>
-            <input
-                type="file"
-                multiple
-                ref={fileInputRef}
-                onChange={handleFiles}
-                className="block w-fit cursor-pointer rounded bg-gray-100 px-4 py-2 text-gray-700 border border-gray-300 shadow-sm hover:bg-gray-200 transition"
-            />
+      <input
+        type="file"
+        multiple={true}
+        ref={fileInputRef}
+        onChange={handleFiles}
+        className="block w-fit cursor-pointer rounded bg-gray-100 px-4 py-2 text-gray-700 border border-gray-300 shadow-sm hover:bg-gray-200 transition"
+        accept="*"
+      />
             {error && <div className="text-red-600 mt-2">{error}</div>}
             <ul className="mt-2">
                 {files.map((file, idx) => (
@@ -425,9 +464,9 @@ function FileUpload({ MAX_FILES, MAX_SIZE_MB, files, setFiles }) {
                     </li>
                 ))}
             </ul>
-            <div className="text-sm text-neutral-500 mt-1">
-                Max {MAX_FILES} files, each ≤ {MAX_SIZE_MB}MB
-            </div>
+      <div className="text-sm text-neutral-500 mt-1">
+        Max 5 files, each ≤ 10MB
+      </div>
         </div>
     );
 }
@@ -492,7 +531,8 @@ export function ExperimentCard({
             onChange={e => onExperimentChange({ ...experiment, ModulesNeeded: e.target.value })}
           ></textarea>
         </div>
-  <FileUpload MAX_FILES={maxFiles} MAX_SIZE_MB={maxSizeMB} files={files} setFiles={setFiles} />
+        <FileUpload MAX_FILES={maxFiles} MAX_SIZE_MB={maxSizeMB} files={files} setFiles={setFiles} />
+        {/* Submit button removed; submission handled in dashboard/page.js */}
       </form>
     </Card>
   );
