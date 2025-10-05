@@ -589,3 +589,29 @@ export function AboutProjectCard() {
     </Card>
   );
 }
+
+export function ContactCard({ onSubmit, message, onMessageChange, sent, userEmail }) {
+  return (
+    <Card title="Contact Us">
+      <p className="mb-6 text-neutral-400">
+        Have questions, feedback, or want to get in touch? Fill out the form below.
+      </p>
+      {userEmail && (
+        <div className="mb-4 text-sm text-neutral-400">
+          Your email: <span className="text-emerald-400">{userEmail}</span>
+        </div>
+      )}
+      {sent ? (
+        <div className="text-emerald-400 font-semibold">Thank you for your message!</div>
+      ) : (
+        <form className="flex flex-col gap-4" onSubmit={onSubmit}>
+          <div className="flex flex-col">
+            <label htmlFor="message" className="mb-1 font-semibold">Message</label>
+            <textarea id="message" name="message" rows={5} className="p-2 border border-neutral-700 rounded bg-neutral-900 text-white" required value={message} onChange={onMessageChange}></textarea>
+          </div>
+          <button type="submit" className="mt-2 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-2 px-4 rounded transition">Send Message</button>
+        </form>
+      )}
+    </Card>
+  );
+}

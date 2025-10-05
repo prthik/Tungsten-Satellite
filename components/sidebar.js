@@ -20,27 +20,34 @@ export default function Sidebar() {
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (u) => {
       setUser(u || null);
-
       if (u && typeof window !== "undefined") {
         setIsAdmin(!!localStorage.getItem(adminKeyForUid(u.uid)));
       } else {
         setIsAdmin(false);
       }
     });
-    return () => unsub();
-  }, []);
-
-  // update admin flag if changed in another tab/window
-  useEffect(() => {
+    // Listen for storage changes (admin revoke in other tabs)
+    function updateAdminStatus() {
+      if (!user) return;
+      setIsAdmin(!!localStorage.getItem(adminKeyForUid(user.uid)));
+    }
     function onStorage(e) {
       if (!user || !e.key) return;
       const expectedKey = adminKeyForUid(user.uid);
       if (e.key === expectedKey) {
-        setIsAdmin(!!localStorage.getItem(expectedKey));
+        updateAdminStatus();
       }
     }
     window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
+    window.addEventListener("admin", updateAdminStatus);
+    // Also poll for admin status changes in this tab
+    const interval = setInterval(updateAdminStatus, 500);
+    return () => {
+      unsub();
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("admin", updateAdminStatus);
+      clearInterval(interval);
+    };
   }, [user]);
 
   // while we don't know auth state, return null to avoid flicker.
