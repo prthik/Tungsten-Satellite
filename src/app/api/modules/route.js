@@ -1,37 +1,12 @@
-import { NextResponse } from 'next/server'
-import { spawn } from 'child_process'
-import path from 'path'
+import { NextResponse } from 'next/server';
+import { getModulesForPlanOption } from './sqlite';
 
 export async function GET(req) {
   try {
-  const { searchParams } = new URL(req.url);
-  const planOptionId = searchParams.get('plan_option_id') || '1';
-  const scriptPath = path.join(process.cwd(), 'src', 'app', 'database', 'cli.py');
-  const py = spawn('python3', [scriptPath, '--modules', '--plan_option_id', planOptionId]);
-    let stdout = '';
-    let stderr = '';
-    py.stdout.on('data', (data) => { stdout += data.toString(); });
-    py.stderr.on('data', (data) => { stderr += data.toString(); });
-    const promise = new Promise((resolve, reject) => {
-      py.on('close', (code) => {
-        if (code === 0) resolve({ stdout, stderr });
-        else reject(new Error(`python exited ${code}: ${stderr}`));
-      });
-      py.on('error', (err) => reject(err));
-    });
-    try {
-      await promise;
-    } catch (err) {
-      // Log and return stderr for debugging
-      return NextResponse.json({ ok: false, error: String(err), stderr }, { status: 500 });
-    }
-    try {
-      const parsed = stdout ? JSON.parse(stdout) : { modules: [] };
-      return NextResponse.json(parsed);
-    } catch (err) {
-      console.error('JSON parse error:', err, 'Raw output:', stdout, 'Stderr:', stderr);
-      return NextResponse.json({ error: 'invalid output', raw: stdout, stderr }, { status: 500 });
-    }
+    const { searchParams } = new URL(req.url);
+    const planOptionId = searchParams.get('plan_option_id') || '1';
+    const modules = await getModulesForPlanOption(planOptionId);
+    return NextResponse.json({ modules });
   } catch (err) {
     console.error('API route error:', err);
     return NextResponse.json({ ok: false, error: String(err) }, { status: 500 });
