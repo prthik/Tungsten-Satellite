@@ -54,8 +54,11 @@ export default function Navbar() {
 
   return (
     <div className="flex w-full justify-between py-6 px-10 border-b bg-neutral-950 border-neutral-500">
-      <div className="text-2xl font-bold">
-        <Link href={"/"}>Tungsten Satellite</Link>
+      <div className="text-2xl font-bold flex items-center gap-2">
+        <Link href={"/"} className="flex items-center gap-2">
+          <img src="/optimized_cube_favicon.gif" alt="Cube logo" className="w-12 h-12 inline-block align-middle" />
+          <span>Tungsten Satellite</span>
+        </Link>
       </div>
 
       <div style={{ display: "flex", gap: "20px" }}>
