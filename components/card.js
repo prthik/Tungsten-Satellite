@@ -33,9 +33,9 @@ export function Grid({ W, H, items, onCellClick, selectedId, draggingId, onDragS
       }}
     >
       {cells}
-      {items.map((p) => (
+      {items.map((p, idx) => (
         <div
-          key={p.id}
+          key={p.id + '-' + idx}
           style={{
             gridColumn: `${p.x + 1} / span ${p.w}`,
             gridRow: `${p.y + 1} / span ${p.h}`,

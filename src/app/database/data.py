@@ -85,7 +85,7 @@ MODULE_TYPES = [
 def get_modules_for_plan_option(plan_option_id: int) -> List[ModuleType]:
     """
     Return all ModuleType objects for the given subscription plan option id.
-    Pass any plan_option_id to dynamically filter modules for that plan.
+    Pass any plan_option_id to dynamically filter modules for that plan. 
     """
     return [m for m in MODULE_TYPES if m.subscription_plan_option_id == plan_option_id]
 # Utility to clear all module types from the database

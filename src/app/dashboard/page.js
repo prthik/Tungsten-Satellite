@@ -484,8 +484,8 @@ export default function DashboardPage() {
 
   // --- Payload Builder Logic ---
   function addPayloadPreset(preset) {
-    const id = crypto.randomUUID();
-    const newItem = { id, ...preset, x: 0, y: 0 };
+  const id = crypto.randomUUID();
+  const newItem = { id, ...preset, x: 0, y: 0, label: preset.name };
     // Snap into first available spot
     const spot = findFirstFit(newItem, payloadItems, bayWidth, bayHeight);
     if (!spot) {
