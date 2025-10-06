@@ -1,5 +1,7 @@
 "use client";
 
+import React, { useRef, useState, useMemo } from "react";
+
 export function Grid({ W, H, items, onCellClick, selectedId, draggingId, onDragStart, onDragOver, onDragEnd }) {
   // Render background grid cells
   const cells = [];
@@ -70,7 +72,6 @@ export function Grid({ W, H, items, onCellClick, selectedId, draggingId, onDragS
     </div>
   );
 }
-import React, { useRef, useState, useMemo } from "react";
 
 export function PayloadBuilder({
   bayWidth,
@@ -303,6 +304,76 @@ export function Header({ tier, credits, credits_available, onBuy, onChangeTier, 
           </div>
         </div>
       )}
+    </Card>
+  );
+}
+
+export function SubscriptionCard({ subscriptionPlan, onChange, onSubmit }) {
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSubmit?.();
+  };
+
+  return (
+    <Card title="Subscription Plan" subtitle="Adjust your plan settings and billing preferences.">
+      <form className="space-y-4" onSubmit={handleSubmit}>
+        <div className="grid gap-3 md:grid-cols-2">
+          <label className="flex flex-col gap-1 text-sm text-neutral-300">
+            Plan Name
+            <input
+              name="name"
+              value={subscriptionPlan.name}
+              onChange={onChange}
+              placeholder="Pro"
+              className="rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-white"
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-sm text-neutral-300">
+            Monthly Price ($)
+            <input
+              name="price"
+              type="number"
+              min="0"
+              step="1"
+              value={subscriptionPlan.price}
+              onChange={onChange}
+              className="rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-white"
+            />
+          </label>
+        </div>
+        <label className="flex flex-col gap-1 text-sm text-neutral-300">
+          Plan Features
+          <textarea
+            name="features"
+            value={subscriptionPlan.features}
+            onChange={onChange}
+            rows={3}
+            placeholder="List perks and capabilities"
+            className="rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-white"
+          />
+        </label>
+        <label className="flex flex-col gap-1 text-sm text-neutral-300">
+          Status
+          <select
+            name="status"
+            value={subscriptionPlan.status}
+            onChange={onChange}
+            className="rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-white"
+          >
+            <option value="active">Active</option>
+            <option value="paused">Paused</option>
+            <option value="canceled">Canceled</option>
+          </select>
+        </label>
+        <div className="flex justify-end">
+          <button
+            type="submit"
+            className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500"
+          >
+            Save Plan
+          </button>
+        </div>
+      </form>
     </Card>
   );
 }
@@ -631,5 +702,355 @@ export function ContactCard({ onSubmit, message, onMessageChange, sent, userEmai
         </form>
       )}
     </Card>
+  );
+}
+
+export function LoginCard({
+  mode,
+  onModeChange,
+  onSubmit,
+  emailRef,
+  passwordRef,
+  messageRef,
+  submitBtnRef,
+}) {
+  const isLogin = mode === "login";
+
+  return (
+    <Card>
+      <h2 className="text-neutral-500 text-2xl font-semibold mb-4">
+        {isLogin ? "Login" : "Create account"}
+      </h2>
+
+      <div ref={messageRef} className="min-h-[1.125rem] mb-2 text-sm" />
+
+      <form onSubmit={onSubmit} className="space-y-4">
+        <div>
+          <label className="block text-sm text-neutral-300 mb-2">Email</label>
+          <input
+            ref={emailRef}
+            type="email"
+            required
+            className="mt-1 w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            placeholder="you@example.com"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm text-neutral-300 mb-2">Password</label>
+          <input
+            ref={passwordRef}
+            type="password"
+            minLength={6}
+            required
+            className="mt-1 w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            placeholder="••••••••"
+          />
+        </div>
+
+        <button
+          ref={submitBtnRef}
+          type="submit"
+          className="w-full rounded-lg bg-emerald-500 px-4 py-2 text-sm font-medium hover:bg-emerald-400 focus:outline-none"
+        >
+          {isLogin ? "Login" : "Create account"}
+        </button>
+      </form>
+
+      <div className="mt-4 text-sm text-neutral-400">
+        {isLogin ? (
+          <>
+            Don&apos;t have an account?{" "}
+            <button
+              onClick={() => onModeChange("register")}
+              className="text-indigo-300 hover:underline ml-1"
+              style={{ float: "right" }}
+            >
+              Create one
+            </button>
+          </>
+        ) : (
+          <>
+            Already have an account?{" "}
+            <button
+              onClick={() => onModeChange("login")}
+              className="text-indigo-300 hover:underline ml-1"
+              style={{ float: "right" }}
+            >
+              Login
+            </button>
+          </>
+        )}
+      </div>
+    </Card>
+  );
+}
+
+export function ProfileCard({
+  nameSpanRef,
+  emailSpanRef,
+  isAdmin,
+  newNameRef,
+  changeNameBtnRef,
+  onChangeName,
+  currentPasswordRef,
+  newPasswordRef,
+  changePassBtnRef,
+  onChangePassword,
+  adminCodeRef,
+  makeAdminBtnRef,
+  onMakeAdmin,
+  onRevokeAdmin,
+  signOutBtnRef,
+  onSignOut,
+  deleteBtnRef,
+  onDeleteAccount,
+  messageRef,
+}) {
+  return (
+    <Card title="My Profile" subtitle="Manage your profile here.">
+      <hr className="border-neutral-800 my-2" />
+      <div className="space-y-4">
+        <div>
+          <div className="flex items-center gap-3">
+            <div>
+              <p className="text-sm text-neutral-400 mb-1">Display name</p>
+              <p ref={nameSpanRef} className="text-lg text-white mb-2">
+                —
+              </p>
+              <p className="text-sm text-neutral-400 mb-1">Email</p>
+              <p ref={emailSpanRef} className="text-sm text-neutral-300 mb-2">
+                —
+              </p>
+            </div>
+            {isAdmin && (
+              <span className="ml-auto inline-flex items-center rounded-lg bg-amber-600/20 px-3 py-1 text-sm text-amber-300 ring-1 ring-inset ring-amber-600/30">
+                Admin
+              </span>
+            )}
+          </div>
+        </div>
+
+        <form onSubmit={onChangeName} className="space-y-2">
+          <label className="block text-sm text-neutral-300">New display name</label>
+          <input
+            ref={newNameRef}
+            className="mt-1 w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            placeholder="Your display name"
+          />
+          <div className="flex gap-2">
+            <button
+              ref={changeNameBtnRef}
+              type="submit"
+              className="rounded-lg bg-indigo-500 px-3 py-2 text-sm font-medium hover:bg-indigo-400"
+            >
+              Update name
+            </button>
+          </div>
+        </form>
+
+        <hr className="border-neutral-800 my-2" />
+
+        <form onSubmit={onChangePassword} className="space-y-2">
+          <label className="block text-sm text-neutral-300">Current password</label>
+          <input
+            ref={currentPasswordRef}
+            type="password"
+            className="mt-1 w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            placeholder="Current password"
+          />
+          <label className="block text-sm text-neutral-300">New password</label>
+          <input
+            ref={newPasswordRef}
+            type="password"
+            className="mt-1 w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            placeholder="New password"
+          />
+          <div className="flex gap-2">
+            <button
+              ref={changePassBtnRef}
+              type="submit"
+              className="rounded-lg bg-indigo-500 px-3 py-2 text-sm font-medium hover:bg-indigo-400"
+            >
+              Change password
+            </button>
+          </div>
+        </form>
+
+        <hr className="border-neutral-800 my-2" />
+
+        <form onSubmit={onMakeAdmin} className="space-y-2">
+          <label className="block text-sm text-neutral-300">Admin code (prototype)</label>
+          <input
+            ref={adminCodeRef}
+            type="password"
+            className="mt-1 w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            placeholder="Enter admin code"
+          />
+          <div className="flex gap-2">
+            <button
+              ref={makeAdminBtnRef}
+              type="submit"
+              className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium hover:bg-emerald-500"
+            >
+              Make account admin
+            </button>
+            <button
+              type="button"
+              onClick={onRevokeAdmin}
+              className="rounded-lg border border-neutral-700 px-3 py-2 text-sm"
+            >
+              Revoke admin
+            </button>
+          </div>
+          <p className="text-xs text-neutral-500 mt-1">
+            Prototype mode: admin flag is stored in browser localStorage only.
+          </p>
+        </form>
+
+        <hr className="border-neutral-800 my-2" />
+
+        <div className="flex gap-2">
+          <button
+            ref={signOutBtnRef}
+            type="button"
+            onClick={onSignOut}
+            className="rounded-lg border border-neutral-700 px-3 py-2 text-sm"
+          >
+            Sign out
+          </button>
+          <button
+            ref={deleteBtnRef}
+            type="button"
+            onClick={onDeleteAccount}
+            className="ml-auto rounded-lg bg-red-600 px-3 py-2 text-sm font-medium hover:bg-red-500"
+          >
+            Delete account
+          </button>
+        </div>
+
+        <div ref={messageRef} className="min-h-[1rem] text-sm mt-2"></div>
+      </div>
+    </Card>
+  );
+}
+
+export function DashboardCards({
+  tier,
+  credits,
+  onBuy,
+  onChangeTier,
+  planOptions,
+  subscriptionPlan,
+  onSubscriptionPlanChange,
+  onSubscriptionPlanSubmit,
+  form,
+  onFormChange,
+  onSubmit,
+  cost,
+  experiment,
+  onExperimentChange,
+  onExperimentSubmit,
+  files,
+  setFiles,
+  bayWidth,
+  bayHeight,
+  onBayWidthChange,
+  onBayHeightChange,
+  items,
+  selectedId,
+  draggingId,
+  onCellClick,
+  onGridClick,
+  onDragStart,
+  onDragOver,
+  onDragEnd,
+  presets,
+  onAddPreset,
+  usedCells,
+  capacityCells,
+  massKg,
+  showSelected,
+  selectedLabel,
+  onMoveSelected,
+  onRemoveSelected,
+  requests,
+  onCancelRequest,
+  canSubmit,
+  onCombinedSubmit,
+}) {
+  return (
+    <div className="min-h-screen bg-neutral-800 text-white p-8">
+      <div className="space-y-8">
+        <Header
+          tier={tier}
+          credits={credits}
+          onBuy={onBuy}
+          onChangeTier={onChangeTier}
+          planOptions={planOptions}
+          subscriptionPlan={subscriptionPlan}
+        />
+        <section className="grid w-full gap-8 md:grid-cols-2">
+          <SubscriptionCard
+            subscriptionPlan={subscriptionPlan}
+            onChange={onSubscriptionPlanChange}
+            onSubmit={onSubscriptionPlanSubmit}
+          />
+          <RequestsTable requests={requests} onCancel={onCancelRequest} />
+        </section>
+        <section className="w-full flex flex-col gap-8">
+          <RequestForm
+            form={form}
+            onFormChange={onFormChange}
+            onSubmit={onSubmit}
+            cost={cost}
+          />
+          <ExperimentCard
+            experiment={experiment}
+            onExperimentChange={onExperimentChange}
+            onExperimentSubmit={onExperimentSubmit}
+            files={files}
+            setFiles={setFiles}
+          />
+        </section>
+        <section className="w-full">
+          <PayloadBuilder
+            bayWidth={bayWidth}
+            bayHeight={bayHeight}
+            onBayWidthChange={onBayWidthChange}
+            onBayHeightChange={onBayHeightChange}
+            items={items}
+            selectedId={selectedId}
+            draggingId={draggingId}
+            onCellClick={onCellClick}
+            onGridClick={onGridClick}
+            onDragStart={onDragStart}
+            onDragOver={onDragOver}
+            onDragEnd={onDragEnd}
+            presets={presets}
+            onAddPreset={onAddPreset}
+            usedCells={usedCells}
+            capacityCells={capacityCells}
+            massKg={massKg}
+            showSelected={showSelected}
+            selectedLabel={selectedLabel}
+            onMoveSelected={onMoveSelected}
+            onRemoveSelected={onRemoveSelected}
+          />
+        </section>
+        {/* Unified submit button at the end */}
+        <div className="w-full flex justify-end pt-8">
+          <button
+            className={`bg-blue-600 text-white py-2 px-6 rounded hover:bg-blue-700 transition text-lg font-semibold ${
+              !canSubmit ? "opacity-50 cursor-not-allowed" : ""
+            }`}
+            onClick={onCombinedSubmit}
+            disabled={!canSubmit}
+          >
+            Submit All Requests
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }

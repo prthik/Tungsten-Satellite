@@ -1,9 +1,9 @@
 // src/app/profile/page.js
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import Card from "../../../components/card";
+import { ProfileCard } from "../../../components/card";
 import { auth } from "../../lib/firebaseClient";
 import {
   onAuthStateChanged,
@@ -26,7 +26,6 @@ export default function Profile() {
   const nameSpanRef = useRef(null);
   const emailSpanRef = useRef(null);
   const messageRef = useRef(null);
-  const adminBadgeRef = useRef(null);
 
   const newNameRef = useRef(null);
   const adminCodeRef = useRef(null);
@@ -38,6 +37,16 @@ export default function Profile() {
   const signOutBtnRef = useRef(null);
   const deleteBtnRef = useRef(null);
   const makeAdminBtnRef = useRef(null);
+
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  const adminKeyForUid = useCallback((uid) => `isAdmin_${uid}`, []);
+
+  const notifyAdminListeners = useCallback(() => {
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event("admin"));
+    }
+  }, []);
 
   // helper to set message text
   function setMessage(text = "", color = "crimson") {
@@ -52,24 +61,20 @@ export default function Profile() {
     ref.current.style.cursor = isLoading ? "not-allowed" : "pointer";
   }
 
-  // helper localStorage key
-  function adminKeyForUid(uid) {
-    return `isAdmin_${uid}`;
-  }
-
-  // check localStorage for admin flag for current user and update UI
-  async function updateAdminUI(user) {
-    if (!user) {
-      if (adminBadgeRef.current) adminBadgeRef.current.style.display = "none";
-      return;
-    }
-    const key = adminKeyForUid(user.uid);
-    const isAdmin =
-      typeof window !== "undefined" && !!localStorage.getItem(key);
-    if (adminBadgeRef.current) {
-      adminBadgeRef.current.style.display = isAdmin ? "inline-block" : "none";
-    }
-  }
+  const updateAdminFlag = useCallback(
+    (user) => {
+      if (!user || typeof window === "undefined") {
+        setIsAdmin(false);
+        notifyAdminListeners();
+        return;
+      }
+      const key = adminKeyForUid(user.uid);
+      const nextIsAdmin = !!localStorage.getItem(key);
+      setIsAdmin(nextIsAdmin);
+      notifyAdminListeners();
+    },
+    [adminKeyForUid, notifyAdminListeners]
+  );
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (user) => {
@@ -80,14 +85,16 @@ export default function Profile() {
           emailSpanRef.current.textContent = user.email || "—";
         if (newNameRef.current)
           newNameRef.current.value = user.displayName || "";
-        updateAdminUI(user);
+        updateAdminFlag(user);
       } else {
         // not signed in -> redirect to login
+        setIsAdmin(false);
+        notifyAdminListeners();
         router.push("/login");
       }
     });
     return () => unsub();
-  }, [router, updateAdminUI]);
+  }, [router, updateAdminFlag]);
 
   function friendlyMessage(code, message) {
     if (!code) return message;
@@ -163,6 +170,8 @@ export default function Profile() {
     setBtnLoading(signOutBtnRef, true);
     try {
       await signOut(auth);
+      setIsAdmin(false);
+      notifyAdminListeners();
       // clear admin UI state for safety on signout
       const user = auth.currentUser;
       if (user && typeof window !== "undefined") {
@@ -265,8 +274,8 @@ export default function Profile() {
         localStorage.setItem(key, "1");
       }
 
-      // Update UI immediately
-      updateAdminUI(user);
+      setIsAdmin(true);
+      notifyAdminListeners();
       setMessage(
         "Account granted admin privileges (client-side only).",
         "green"
@@ -291,7 +300,8 @@ export default function Profile() {
     if (typeof window !== "undefined") {
       localStorage.removeItem(adminKeyForUid(user.uid));
     }
-    updateAdminUI(user);
+    setIsAdmin(false);
+    notifyAdminListeners();
     setMessage("Admin privileges revoked (client-side).", "crimson");
     router.refresh();
   }
@@ -299,154 +309,27 @@ export default function Profile() {
   return (
     <div className="min-h-screen bg-neutral-800 flex items-start justify-center py-12 px-6">
       <div className="w-full max-w-3xl">
-        <Card title="My Profile" subtitle="Manage your profile here.">
-          <hr className="border-neutral-800 my-2" />
-          <div className="space-y-4">
-            {/* Basic info */}
-            <div>
-              <div className="flex items-center gap-3">
-                <div>
-                  <p className="text-sm text-neutral-400 mb-1">Display name</p>
-                  <p ref={nameSpanRef} className="text-lg text-white mb-2">
-                    —
-                  </p>
-                  <p className="text-sm text-neutral-400 mb-1">Email</p>
-                  <p
-                    ref={emailSpanRef}
-                    className="text-sm text-neutral-300 mb-2"
-                  >
-                    —
-                  </p>
-                </div>
-
-                {/* Admin badge */}
-                <div
-                  ref={adminBadgeRef}
-                  style={{ display: "none" }}
-                  className="ml-auto"
-                >
-                  <span className="inline-flex items-center rounded-lg bg-amber-600/20 px-3 py-1 text-sm text-amber-300 ring-1 ring-inset ring-amber-600/30">
-                    Admin
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Change display name */}
-            <form onSubmit={handleChangeName} className="space-y-2">
-              <label className="block text-sm text-neutral-300">
-                New display name
-              </label>
-              <input
-                ref={newNameRef}
-                className="mt-1 w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                placeholder="Your display name"
-              />
-              <div className="flex gap-2">
-                <button
-                  ref={changeNameBtnRef}
-                  type="submit"
-                  className="rounded-lg bg-indigo-500 px-3 py-2 text-sm font-medium hover:bg-indigo-400"
-                >
-                  Update name
-                </button>
-              </div>
-            </form>
-
-            <hr className="border-neutral-800 my-2" />
-
-            {/* Change password */}
-            <form onSubmit={handleChangePassword} className="space-y-2">
-              <label className="block text-sm text-neutral-300">
-                Current password
-              </label>
-              <input
-                ref={currentPasswordRef}
-                type="password"
-                className="mt-1 w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                placeholder="Current password"
-              />
-              <label className="block text-sm text-neutral-300">
-                New password
-              </label>
-              <input
-                ref={newPasswordRef}
-                type="password"
-                className="mt-1 w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                placeholder="New password"
-              />
-              <div className="flex gap-2">
-                <button
-                  ref={changePassBtnRef}
-                  type="submit"
-                  className="rounded-lg bg-indigo-500 px-3 py-2 text-sm font-medium hover:bg-indigo-400"
-                >
-                  Change password
-                </button>
-              </div>
-            </form>
-
-            <hr className="border-neutral-800 my-2" />
-
-            {/* Admin code form (client-side prototype) */}
-            <form onSubmit={handleMakeAdmin} className="space-y-2">
-              <label className="block text-sm text-neutral-300">
-                Admin code (prototype)
-              </label>
-              <input
-                ref={adminCodeRef}
-                type="password"
-                className="mt-1 w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                placeholder="Enter admin code"
-              />
-              <div className="flex gap-2">
-                <button
-                  ref={makeAdminBtnRef}
-                  type="submit"
-                  className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium hover:bg-emerald-500"
-                >
-                  Make account admin
-                </button>
-                <button
-                  type="button"
-                  onClick={handleRevokeAdmin}
-                  className="rounded-lg border border-neutral-700 px-3 py-2 text-sm"
-                >
-                  Revoke admin
-                </button>
-              </div>
-              <p className="text-xs text-neutral-500 mt-1">
-                Prototype mode: admin flag is stored in browser localStorage
-                only.
-              </p>
-            </form>
-
-            <hr className="border-neutral-800 my-2" />
-
-            <div className="flex gap-2">
-              <button
-                ref={signOutBtnRef}
-                type="button"
-                onClick={handleSignOut}
-                className="rounded-lg border border-neutral-700 px-3 py-2 text-sm"
-              >
-                Sign out
-              </button>
-
-              <button
-                ref={deleteBtnRef}
-                type="button"
-                onClick={handleDeleteAccount}
-                className="ml-auto rounded-lg bg-red-600 px-3 py-2 text-sm font-medium hover:bg-red-500"
-              >
-                Delete account
-              </button>
-            </div>
-
-            {/* message area */}
-            <div ref={messageRef} className="min-h-[1rem] text-sm mt-2"></div>
-          </div>
-        </Card>
+        <ProfileCard
+          nameSpanRef={nameSpanRef}
+          emailSpanRef={emailSpanRef}
+          isAdmin={isAdmin}
+          newNameRef={newNameRef}
+          changeNameBtnRef={changeNameBtnRef}
+          onChangeName={handleChangeName}
+          currentPasswordRef={currentPasswordRef}
+          newPasswordRef={newPasswordRef}
+          changePassBtnRef={changePassBtnRef}
+          onChangePassword={handleChangePassword}
+          adminCodeRef={adminCodeRef}
+          makeAdminBtnRef={makeAdminBtnRef}
+          onMakeAdmin={handleMakeAdmin}
+          onRevokeAdmin={handleRevokeAdmin}
+          signOutBtnRef={signOutBtnRef}
+          onSignOut={handleSignOut}
+          deleteBtnRef={deleteBtnRef}
+          onDeleteAccount={handleDeleteAccount}
+          messageRef={messageRef}
+        />
       </div>
     </div>
   );

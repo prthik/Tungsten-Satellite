@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [user, setUser] = useState(null); // null => signed out, object => signed in
+  const [isAdminFlag, setIsAdminFlag] = useState(false);
   const ref = useRef(null);
   const router = useRouter();
 
@@ -58,6 +59,28 @@ export default function Navbar() {
     return !!localStorage.getItem(`isAdmin_${uid}`);
   }
 
+  useEffect(() => {
+    function updateAdminStatus() {
+      if (!user) {
+        setIsAdminFlag(false);
+        return;
+      }
+      setIsAdminFlag(isAdmin(user.uid));
+    }
+
+    updateAdminStatus();
+
+    if (typeof window !== "undefined") {
+      window.addEventListener("admin", updateAdminStatus);
+    }
+
+    return () => {
+      if (typeof window !== "undefined") {
+        window.removeEventListener("admin", updateAdminStatus);
+      }
+    };
+  }, [user]);
+
   return (
     <div className="flex w-full justify-between py-6 px-10 border-b bg-neutral-950 border-neutral-500 items-center">
       <div className="text-2xl font-bold flex items-center gap-2">
@@ -99,11 +122,16 @@ export default function Navbar() {
               {label}
             </span>
             {/* Admin badge (client-side prototype) */}
-            {user && isAdmin(user.uid) && (
-              <span className="inline-flex items-center rounded-lg bg-amber-600/20 px-3 py-1 text-sm text-amber-300 ring-1 ring-inset ring-amber-600/30 ml-2">
-                Admin
-              </span>
-            )}
+            <span
+              aria-hidden={!isAdminFlag}
+              className={`inline-flex items-center rounded-lg bg-amber-600/20 px-3 py-1 text-sm text-amber-300 ring-1 ring-inset ring-amber-600/30 overflow-hidden transition-all duration-300 ease-out transform ${
+                isAdminFlag
+                  ? "opacity-100 scale-100 translate-y-0 ml-2 max-w-[8rem]"
+                  : "opacity-0 scale-75 -translate-y-1 ml-0 max-w-0 pointer-events-none"
+              }`}
+            >
+              Admin
+            </span>
             <svg
               className={`w-4 h-4 transition-transform ${
                 open ? "rotate-180" : "rotate-0"

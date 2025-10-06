@@ -1,16 +1,8 @@
 "use client";
 
 import "../globals.css";
-import { useEffect, useMemo, useRef, useState } from "react";
-import Card, {
-  Header,
-  Badge,
-  RequestForm,
-  SubscriptionCard,
-  ExperimentCard,
-  RequestsTable,
-  PayloadBuilder,
-} from "../../../components/card";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { DashboardCards } from "../../../components/card";
 import { auth } from "../../lib/firebaseClient";
 
 // DASHBOARD PAGE
@@ -351,35 +343,31 @@ export default function DashboardPage() {
     }
   }
 
-  function handleCellClick(x, y) {
-    const found = [...payloadItems]
-      .reverse()
-      .find((p) => x >= p.x && x < p.x + p.w && y >= p.y && y < p.y + p.h);
-    setSelectedId(found?.id ?? null);
-  }
-
-  function handleMoveSelected(dx, dy) {
-    if (!selectedId) return;
-    setPayloadItems((ps) => {
-      return ps.map((p) => {
-        if (p.id !== selectedId) return p;
-        let nx = Math.max(0, Math.min(bayWidth - p.w, p.x + dx));
-        let ny = Math.max(0, Math.min(bayHeight - p.h, p.y + dy));
-        // Check collision with others
-        const others = ps.filter((o) => o.id !== p.id);
-        const blocked = others.some((o) =>
-          rectsOverlap(nx, ny, p.w, p.h, o.x, o.y, o.w, o.h)
-        );
-        if (blocked) return p; // ignore move if blocked
-        return { ...p, x: nx, y: ny };
+  const handleMoveSelected = useCallback(
+    (dx, dy) => {
+      if (!selectedId) return;
+      setPayloadItems((ps) => {
+        return ps.map((p) => {
+          if (p.id !== selectedId) return p;
+          const nx = Math.max(0, Math.min(bayWidth - p.w, p.x + dx));
+          const ny = Math.max(0, Math.min(bayHeight - p.h, p.y + dy));
+          const others = ps.filter((o) => o.id !== p.id);
+          const blocked = others.some((o) =>
+            rectsOverlap(nx, ny, p.w, p.h, o.x, o.y, o.w, o.h)
+          );
+          if (blocked) return p;
+          return { ...p, x: nx, y: ny };
+        });
       });
-    });
-  }
-  function handleRemoveSelected() {
+    },
+    [selectedId, bayWidth, bayHeight]
+  );
+
+  const handleRemoveSelected = useCallback(() => {
     if (!selectedId) return;
     setPayloadItems((ps) => ps.filter((p) => p.id !== selectedId));
     setSelectedId(null);
-  }
+  }, [selectedId]);
 
   // These must come after payloadItems is declared
   const selectedLabel = payloadItems.find((p) => p.id === selectedId)?.label;
@@ -513,54 +501,28 @@ export default function DashboardPage() {
     return !(x1 + w1 <= x2 || x2 + w2 <= x1 || y1 + h1 <= y2 || y2 + h2 <= y1);
   }
 
-  function moveSelected(dx, dy) {
-    if (!selectedId) return;
-    setPayloadItems((ps) =>
-      ps.map((p) => {
-        if (p.id !== selectedId) return p;
-        let nx = Math.max(0, Math.min(bayWidth - p.w, p.x + dx));
-        let ny = Math.max(0, Math.min(bayHeight - p.h, p.y + dy));
-        // Check collision with others
-        const others = ps.filter((o) => o.id !== p.id);
-        const blocked = others.some((o) =>
-          rectsOverlap(nx, ny, p.w, p.h, o.x, o.y, o.w, o.h)
-        );
-        if (blocked) return p; // ignore move if blocked
-        return { ...p, x: nx, y: ny };
-      })
-    );
-  }
-
-  function removeSelected() {
-    if (!selectedId) return;
-    setPayloadItems((ps) => ps.filter((p) => p.id !== selectedId));
-    setSelectedId(null);
-  }
-
   // Keyboard movement for selected item
   useEffect(() => {
     const onKey = (e) => {
       if (!selectedId) return;
-      if (
-        [
-          "ArrowUp",
-          "ArrowDown",
-          "ArrowLeft",
-          "ArrowRight",
-          "Delete",
-          "Backspace",
-        ].includes(e.key)
-      )
-        e.preventDefault();
-      if (e.key === "ArrowUp") moveSelected(0, -1);
-      if (e.key === "ArrowDown") moveSelected(0, 1);
-      if (e.key === "ArrowLeft") moveSelected(-1, 0);
-      if (e.key === "ArrowRight") moveSelected(1, 0);
-      if (e.key === "Delete" || e.key === "Backspace") removeSelected();
+      const handledKeys = [
+        "ArrowUp",
+        "ArrowDown",
+        "ArrowLeft",
+        "ArrowRight",
+        "Delete",
+        "Backspace",
+      ];
+      if (handledKeys.includes(e.key)) e.preventDefault();
+      if (e.key === "ArrowUp") handleMoveSelected(0, -1);
+      if (e.key === "ArrowDown") handleMoveSelected(0, 1);
+      if (e.key === "ArrowLeft") handleMoveSelected(-1, 0);
+      if (e.key === "ArrowRight") handleMoveSelected(1, 0);
+      if (e.key === "Delete" || e.key === "Backspace") handleRemoveSelected();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [selectedId, bayWidth, bayHeight, payloadItems, moveSelected, removeSelected]);
+  }, [selectedId, handleMoveSelected, handleRemoveSelected]);
 
   // Plan options for dropdown
   const planOptions = [
@@ -582,96 +544,54 @@ export default function DashboardPage() {
     }));
   }
 
+  function handleSubscriptionPlanSubmit() {
+    console.log("Subscription plan saved", subscriptionPlan);
+  }
+
   return (
-    <div className="min-h-screen bg-neutral-800 text-white p-8">
-      <div className="space-y-8">
-        <Header
-          tier={tier}
-          credits={credits}
-          onBuy={() => buyCredits(200)}
-          onChangeTier={handlePlanOptionChange}
-        />
-        <section className="w-full flex flex-col gap-8">
-          <RequestForm
-            form={form}
-            onFormChange={handleFormChange}
-            onSubmit={handleFormSubmit}
-            cost={cost}
-          />
-          <ExperimentCard
-            experiment={experiment}
-            onExperimentChange={handleExperimentChange}
-            onExperimentSubmit={handleExperimentSubmit}
-            files={experimentFiles}
-            setFiles={setExperimentFiles}
-          />
-        </section>
-        <section className="w-full">
-          <PayloadBuilder
-            bayWidth={bayWidth}
-            bayHeight={bayHeight}
-            onBayWidthChange={handleBayWidthChange}
-            onBayHeightChange={handleBayHeightChange}
-            items={payloadItems}
-            selectedId={selectedId}
-            draggingId={draggingId}
-            onCellClick={handleCellClick}
-            onGridClick={handleGridClick}
-            onDragStart={handleDragStart}
-            onDragOver={handleDragOver}
-            onDragEnd={handleDragEnd}
-            presets={payloadPresets}
-            selectedPlanOptionId={planOptionId}
-            onFetchPresets={fetchPresets}
-            onAddPreset={handleAddPreset}
-            usedCells={usedCells}
-            capacityCells={capacityCells}
-            massKg={massKg}
-            showSelected={showSelected}
-            selectedLabel={selectedLabel}
-            onMoveSelected={handleMoveSelected}
-            onRemoveSelected={handleRemoveSelected}
-          />
-        </section>
-        {/* Unified submit button at the end */}
-        <div className="w-full flex justify-end pt-8">
-          <button
-            className={`bg-blue-600 text-white py-2 px-6 rounded hover:bg-blue-700 transition text-lg font-semibold ${
-              !canSubmit ? "opacity-50 cursor-not-allowed" : ""
-            }`}
-            onClick={handleCombinedSubmit}
-            disabled={!canSubmit}
-          >
-            Submit All Requests
-          </button>
-        </div>
-      </div>
-    </div>
+    <DashboardCards
+      tier={tier}
+      credits={credits}
+      onBuy={() => buyCredits(200)}
+      onChangeTier={handlePlanOptionChange}
+      planOptions={planOptions}
+      subscriptionPlan={subscriptionPlan}
+      onSubscriptionPlanChange={handleSubscriptionPlanChange}
+      onSubscriptionPlanSubmit={handleSubscriptionPlanSubmit}
+      form={form}
+      onFormChange={handleFormChange}
+      onSubmit={handleFormSubmit}
+      cost={cost}
+      experiment={experiment}
+      onExperimentChange={handleExperimentChange}
+      onExperimentSubmit={handleExperimentSubmit}
+      files={experimentFiles}
+      setFiles={setExperimentFiles}
+      bayWidth={bayWidth}
+      bayHeight={bayHeight}
+      onBayWidthChange={handleBayWidthChange}
+      onBayHeightChange={handleBayHeightChange}
+      items={payloadItems}
+      selectedId={selectedId}
+      draggingId={draggingId}
+      onCellClick={handleCellClick}
+      onGridClick={handleGridClick}
+      onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
+      onDragEnd={handleDragEnd}
+      presets={payloadPresets}
+      onAddPreset={handleAddPreset}
+      usedCells={usedCells}
+      capacityCells={capacityCells}
+      massKg={massKg}
+      showSelected={showSelected}
+      selectedLabel={selectedLabel}
+      onMoveSelected={handleMoveSelected}
+      onRemoveSelected={handleRemoveSelected}
+      requests={requests}
+      onCancelRequest={cancelRequest}
+      canSubmit={canSubmit}
+      onCombinedSubmit={handleCombinedSubmit}
+    />
   );
-}
-
-function moveItems(setItems, selectedId, dx, dy, W, H) {
-  setItems((ps) =>
-    ps.map((p, _, arr) => {
-      if (p.id !== selectedId) return p;
-      let nx = Math.max(0, Math.min(W - p.w, p.x + dx));
-      let ny = Math.max(0, Math.min(H - p.h, p.y + dy));
-      const others = arr.filter((o) => o.id !== p.id);
-      const blocked = others.some(
-        (o) =>
-          !(
-            nx + p.w <= o.x ||
-            o.x + o.w <= nx ||
-            ny + p.h <= o.y ||
-            o.y + o.h <= ny
-          )
-      );
-      if (blocked) return p;
-      return { ...p, x: nx, y: ny };
-    })
-  );
-}
-
-function removeItem(setItems, id) {
-  setItems((ps) => ps.filter((p) => p.id !== id));
 }
