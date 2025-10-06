@@ -85,7 +85,7 @@ export default function Sidebar() {
         </Link>
         {/* Experiments link */}
         <Link
-          href="/experiemnts"
+          href="/experiments"
           className={`flex flex-row gap-2 items-center px-4 py-2 rounded transition-all duration-200 text-base text-neutral-300 hover:text-white hover:bg-neutral-800 ${
             pathname === "/experiments" ? "bg-neutral-800 text-white" : ""
           }`}
@@ -101,7 +101,7 @@ export default function Sidebar() {
             strokeLinejoin="round"
             aria-hidden="true"
           >
-            <title>Dashboard</title>
+            <title>Experiments</title>
             <rect x="3" y="3" width="8" height="8" rx="1.5" />
             <rect x="13" y="3" width="8" height="8" rx="1.5" />
             <rect x="3" y="13" width="8" height="8" rx="1.5" />
