@@ -904,6 +904,34 @@ export function ReportsCard({
   );
 }
 
+export function HomeNavCards({ cards }) {
+  return (
+    <div className="w-full max-w-5xl flex flex-col gap-4 mt-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {cards.map((card) => (
+          <a
+            key={card.href || card.title}
+            href={card.href}
+            target={card.external ? "_blank" : undefined}
+            rel={card.external ? "noopener noreferrer" : undefined}
+            className="group flex flex-1 min-h-[160px] max-w-xs mx-auto"
+          >
+            <Card className={card.highlight ? card.highlight.className : undefined}>
+              <span className="mb-2 text-neutral-200">{card.icon}</span>
+              <span className={`text-xl font-semibold mb-1 group-hover:text-neutral-300 ${card.highlight ? card.highlight.titleClassName : ""}`}>
+                {card.title}
+              </span>
+              <span className={`text-neutral-400 text-left text-sm ${card.highlight ? card.highlight.subtitleClassName : ""}`}>
+                {card.description}
+              </span>
+            </Card>
+          </a>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function ReportDetailsModal({ request, onClose, onDownloadFile }) {
   if (!request) return null;
 

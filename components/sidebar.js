@@ -83,11 +83,11 @@ export default function Sidebar() {
           </svg>
           Home
         </Link>
-        {/* Dashboard link */}
+        {/* Experiments link */}
         <Link
-          href="/dashboard"
+          href="/experiemnts"
           className={`flex flex-row gap-2 items-center px-4 py-2 rounded transition-all duration-200 text-base text-neutral-300 hover:text-white hover:bg-neutral-800 ${
-            pathname === "/dashboard" ? "bg-neutral-800 text-white" : ""
+            pathname === "/experiments" ? "bg-neutral-800 text-white" : ""
           }`}
         >
           <svg
@@ -107,7 +107,7 @@ export default function Sidebar() {
             <rect x="3" y="13" width="8" height="8" rx="1.5" />
             <rect x="13" y="13" width="8" height="8" rx="1.5" />
           </svg>
-          Dashboard
+          Experiments
         </Link>
         {/* Reports link */}
         <Link
