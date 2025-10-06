@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { spawn } from "child_process";
 import path from "path";
 
+const PYTHON_CMD = process.env.PYTHON_CMD || "python3";
+
 export async function POST(req) {
   try {
     const body = await req.json();
@@ -12,7 +14,7 @@ export async function POST(req) {
       "database",
       "cli.py"
     );
-    const py = spawn("python", [scriptPath]);
+    const py = spawn(PYTHON_CMD, [scriptPath]);
     let stdout = "";
     let stderr = "";
     py.stdout.on("data", (data) => { stdout += data.toString(); });
@@ -59,7 +61,7 @@ export async function GET(req) {
       "cli.py"
     );
     console.log("Using script path:", scriptPath);
-    const py = spawn("python", [scriptPath, "--list"]);
+    const py = spawn(PYTHON_CMD, [scriptPath, "--list"]);
 
     let stdout = "";
     let stderr = "";

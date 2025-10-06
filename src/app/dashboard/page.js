@@ -544,10 +544,6 @@ export default function DashboardPage() {
     }));
   }
 
-  function handleSubscriptionPlanSubmit() {
-    console.log("Subscription plan saved", subscriptionPlan);
-  }
-
   return (
     <DashboardCards
       tier={tier}
@@ -556,8 +552,6 @@ export default function DashboardPage() {
       onChangeTier={handlePlanOptionChange}
       planOptions={planOptions}
       subscriptionPlan={subscriptionPlan}
-      onSubscriptionPlanChange={handleSubscriptionPlanChange}
-      onSubscriptionPlanSubmit={handleSubscriptionPlanSubmit}
       form={form}
       onFormChange={handleFormChange}
       onSubmit={handleFormSubmit}
@@ -588,8 +582,6 @@ export default function DashboardPage() {
       selectedLabel={selectedLabel}
       onMoveSelected={handleMoveSelected}
       onRemoveSelected={handleRemoveSelected}
-      requests={requests}
-      onCancelRequest={cancelRequest}
       canSubmit={canSubmit}
       onCombinedSubmit={handleCombinedSubmit}
     />

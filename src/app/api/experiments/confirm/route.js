@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { spawn } from "child_process";
 import path from "path";
 
+const PYTHON_CMD = process.env.PYTHON_CMD || "python3";
+
 export async function POST(req) {
   try {
     const body = await req.json();
@@ -13,7 +15,7 @@ export async function POST(req) {
       "database",
       "cli.py"
     );
-    const py = spawn("python", [scriptPath, "--confirm"]);
+    const py = spawn(PYTHON_CMD, [scriptPath, "--confirm"]);
 
     let stdout = "";
     let stderr = "";

@@ -140,9 +140,9 @@ export default function Sidebar() {
           <>
             <div className="pt-4 border-t border-neutral-800" aria-hidden="true"></div>
             <Link
-              href="/requests"
+              href="/approvals"
               className={`flex flex-row gap-2 items-center px-4 py-2 rounded transition-all duration-200 text-base text-amber-300 hover:text-amber-400 hover:bg-neutral-800 ${
-                pathname === "/requests" ? "bg-neutral-800 text-amber-400" : ""
+                pathname === "/approvals" ? "bg-neutral-800 text-amber-400" : ""
               }`}
               style={{ marginTop: '0rem' }}
             >

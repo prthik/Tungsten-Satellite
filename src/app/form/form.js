@@ -63,7 +63,7 @@ function FileUpload({ files, setFiles }) {
   );
 }
 
-export default function ExperimentForm() {
+export default function Form() {
   const [files, setFiles] = useState([]);
   const [modules, setModules] = useState([]);
   const [useBuilder, setUseBuilder] = useState(false);

@@ -308,76 +308,6 @@ export function Header({ tier, credits, credits_available, onBuy, onChangeTier, 
   );
 }
 
-export function SubscriptionCard({ subscriptionPlan, onChange, onSubmit }) {
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onSubmit?.();
-  };
-
-  return (
-    <Card title="Subscription Plan" subtitle="Adjust your plan settings and billing preferences.">
-      <form className="space-y-4" onSubmit={handleSubmit}>
-        <div className="grid gap-3 md:grid-cols-2">
-          <label className="flex flex-col gap-1 text-sm text-neutral-300">
-            Plan Name
-            <input
-              name="name"
-              value={subscriptionPlan.name}
-              onChange={onChange}
-              placeholder="Pro"
-              className="rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-white"
-            />
-          </label>
-          <label className="flex flex-col gap-1 text-sm text-neutral-300">
-            Monthly Price ($)
-            <input
-              name="price"
-              type="number"
-              min="0"
-              step="1"
-              value={subscriptionPlan.price}
-              onChange={onChange}
-              className="rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-white"
-            />
-          </label>
-        </div>
-        <label className="flex flex-col gap-1 text-sm text-neutral-300">
-          Plan Features
-          <textarea
-            name="features"
-            value={subscriptionPlan.features}
-            onChange={onChange}
-            rows={3}
-            placeholder="List perks and capabilities"
-            className="rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-white"
-          />
-        </label>
-        <label className="flex flex-col gap-1 text-sm text-neutral-300">
-          Status
-          <select
-            name="status"
-            value={subscriptionPlan.status}
-            onChange={onChange}
-            className="rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-white"
-          >
-            <option value="active">Active</option>
-            <option value="paused">Paused</option>
-            <option value="canceled">Canceled</option>
-          </select>
-        </label>
-        <div className="flex justify-end">
-          <button
-            type="submit"
-            className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500"
-          >
-            Save Plan
-          </button>
-        </div>
-      </form>
-    </Card>
-  );
-}
-
 export function Badge({ children }) {
   return (
     <span className="inline-flex items-center rounded-lg bg-emerald-600/20 px-3 py-1 text-base text-emerald-300 ring-1 ring-inset ring-emerald-600/40">
@@ -456,47 +386,6 @@ export function RequestForm({ form, onFormChange, onSubmit, cost }) {
   );
 }
 
-
-export function RequestsTable({ requests, onCancel }) {
-  return (
-    <Card title="Recent Requests">
-      {requests.length === 0 ? (
-        <p className="text-base text-neutral-400">No requests yet. Submit your first materials or lab-time request.</p>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-left text-base">
-            <thead className="text-neutral-300">
-              <tr>
-                <th className="px-3 py-2">Material</th>
-                <th className="px-3 py-2">Amount</th>
-                <th className="px-3 py-2">Priority</th>
-                <th className="px-3 py-2">Status</th>
-                <th className="px-3 py-2">Notes</th>
-                <th className="px-3 py-2"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {requests.map((r) => (
-                <tr key={r.id} className="border-t border-neutral-800">
-                  <td className="px-3 py-2">{r.material}</td>
-                  <td className="px-3 py-2">{r.amount} {r.unit}</td>
-                  <td className="px-3 py-2">{r.priority}</td>
-                  <td className="px-3 py-2">{r.status}</td>
-                  <td className="px-3 py-2 text-neutral-300">{r.notes}</td>
-                  <td className="px-3 py-2 text-right">
-                    <button onClick={() => onCancel(r.id)} className="rounded-lg border border-neutral-700 px-3 py-1 text-xs hover:border-neutral-600">
-                      Cancel
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </Card>
-  );
-}
 
 
 
@@ -935,6 +824,629 @@ export function ProfileCard({
   );
 }
 
+export function ReportsCard({
+  title = "My Experiments",
+  subtitle = "View your experiment requests and their status.",
+  statusFilter,
+  onStatusFilterChange,
+  requests,
+  onViewDetails,
+}) {
+  return (
+    <Card title={title} subtitle={subtitle}>
+      <div className="mb-4 flex items-center gap-4">
+        <label className="text-neutral-400">Filter by Status:</label>
+        <select
+          className="bg-neutral-900 border border-neutral-700 rounded px-3 py-1 text-neutral-200"
+          onChange={(e) => onStatusFilterChange(e.target.value)}
+          value={statusFilter}
+        >
+          <option value="all">All Statuses</option>
+          <option value="pending approval">Pending Approval</option>
+          <option value="experiment queued">Experiment Queued</option>
+          <option value="experiment completed">Experiment Completed</option>
+          <option value="failed">Failed</option>
+        </select>
+      </div>
+
+      <div className="mt-4">
+        {requests.length === 0 ? (
+          <div className="text-neutral-400 p-6 text-center">
+            No experiments found.
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-left text-sm">
+              <thead className="text-neutral-300 border-b border-neutral-800">
+                <tr>
+                  <th className="px-4 py-3">Name</th>
+                  <th className="px-4 py-3">Type</th>
+                  <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3">Submitted</th>
+                  <th className="px-4 py-3">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="text-neutral-200">
+                {requests.map((r) => (
+                  <tr
+                    key={r.id}
+                    className="border-b border-neutral-800 hover:bg-neutral-900/30"
+                  >
+                    <td className="px-4 py-3 align-middle">{r.name}</td>
+                    <td className="px-4 py-3 align-middle">
+                      {r.experimentType || "N/A"}
+                    </td>
+                    <td className="px-4 py-3 align-middle">{r.status}</td>
+                    <td className="px-4 py-3 align-middle text-neutral-400">
+                      {r.created_at
+                        ? new Date(r.created_at).toLocaleString()
+                        : r.createdAt
+                        ? new Date(r.createdAt).toLocaleString()
+                        : ""}
+                    </td>
+                    <td className="px-4 py-3 align-middle">
+                      <button
+                        onClick={() => onViewDetails(r)}
+                        className="rounded-md bg-indigo-600 px-3 py-1 text-sm hover:bg-indigo-500"
+                        type="button"
+                      >
+                        View Details
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </Card>
+  );
+}
+
+export function ReportDetailsModal({ request, onClose, onDownloadFile }) {
+  if (!request) return null;
+
+  let payload = null;
+  try {
+    if (request.payload) payload = JSON.parse(request.payload);
+  } catch (_) {
+    payload = null;
+  }
+  const builder = payload?.payload_builder;
+  const items = payload?.builder_items || [];
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      className="fixed inset-0 z-50 flex items-center justify-center"
+    >
+      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
+
+      <div className="relative z-10 w-full max-w-2xl mx-4">
+        <div className="bg-neutral-950 rounded-lg border border-neutral-700 p-6 max-h-[85vh] flex flex-col">
+          <div className="flex items-start justify-between flex-shrink-0">
+            <div>
+              <h3 className="text-lg font-semibold text-white">{request.name}</h3>
+              <p className="text-xs text-neutral-500">
+                Submitted:{" "}
+                {request.created_at
+                  ? new Date(request.created_at).toLocaleString()
+                  : request.createdAt
+                  ? new Date(request.createdAt).toLocaleString()
+                  : ""}
+              </p>
+            </div>
+            <button
+              onClick={onClose}
+              className="text-neutral-400 hover:text-white"
+              aria-label="Close"
+              type="button"
+            >
+              ✕
+            </button>
+          </div>
+
+          <div className="h-px bg-neutral-800 my-4 flex-shrink-0" />
+
+          <div className="flex-1 overflow-y-auto pr-2 text-sm text-neutral-300 space-y-4 modal-scroll">
+            <div>
+              <h4 className="text-lg font-semibold mb-2 text-white">Basic Information</h4>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <p className="text-neutral-400">ID</p>
+                  <p className="font-medium">{request.id}</p>
+                </div>
+                <div>
+                  <p className="text-neutral-400">Status</p>
+                  <p className="font-medium">{request.status}</p>
+                </div>
+                <div>
+                  <p className="text-neutral-400">Experiment Type</p>
+                  <p className="font-medium">{request.experimentType || "Not specified"}</p>
+                </div>
+                <div>
+                  <p className="text-neutral-400">Modules Needed</p>
+                  <p className="font-medium">{request.ModulesNeeded || "Not specified"}</p>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h4 className="text-lg font-semibold mb-2 text-white">Description</h4>
+              <p className="whitespace-pre-wrap bg-neutral-900 p-3 rounded-md">
+                {request.description || "No description provided"}
+              </p>
+            </div>
+
+            <div>
+              <h4 className="text-lg font-semibold mb-2 text-white">Status Information</h4>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <p className="text-neutral-400">Current Status</p>
+                  <p className="font-medium">{request.status}</p>
+                </div>
+                {request.notes && (
+                  <div className="col-span-2">
+                    <p className="text-neutral-400">Notes</p>
+                    <p className="font-medium">{request.notes}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {payload && (
+              <div>
+                <h4 className="text-lg font-semibold mb-2 text-white">Payload Information</h4>
+                <div className="space-y-6">
+                  <div className="bg-neutral-900 p-4 rounded-md">
+                    <h5 className="font-medium text-white mb-3">
+                      Payload Builder Configuration
+                    </h5>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <p className="text-neutral-400 text-sm">Bay Name</p>
+                        <p className="font-medium">{builder?.name || "N/A"}</p>
+                      </div>
+                      <div>
+                        <p className="text-neutral-400 text-sm">Created At</p>
+                        <p className="font-medium">
+                          {builder?.created_at
+                            ? new Date(builder.created_at).toLocaleString()
+                            : "N/A"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-neutral-400 text-sm">Bay Dimensions</p>
+                        <p className="font-medium">
+                          {builder?.bay_width || 0} × {builder?.bay_height || 0}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-neutral-900 p-4 rounded-md">
+                    <h5 className="font-medium text-white mb-3">Payload Items</h5>
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-neutral-800">
+                            <th className="text-left py-2 px-3 text-neutral-400">Module</th>
+                            <th className="text-left py-2 px-3 text-neutral-400">Position</th>
+                            <th className="text-left py-2 px-3 text-neutral-400">Mass</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {items.map((item, index) => (
+                            <tr key={index} className="border-b border-neutral-800">
+                              <td className="py-2 px-3">{item.label}</td>
+                              <td className="py-2 px-3">x: {item.x}, y: {item.y}</td>
+                              <td className="py-2 px-3">{item.massKg} kg</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {request.files && request.files.length > 0 && (
+              <div>
+                <h4 className="text-lg font-semibold mb-2 text-white">Attached Files</h4>
+                <ul className="list-disc list-inside">
+                  {request.files.map((file, index) => (
+                    <li key={index} className="text-neutral-400">
+                      {file.filename}
+                      {typeof file.size === "number"
+                        ? ` (${(file.size / 1024).toFixed(2)} KB)`
+                        : ""}
+                      <button
+                        className="ml-2 px-2 py-1 bg-indigo-600 text-white rounded text-xs"
+                        onClick={() =>
+                          onDownloadFile(file.base64 || file.data, file.filename)
+                        }
+                        type="button"
+                      >
+                        Download
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+
+          <div className="mt-4 pt-4 border-t border-neutral-800 flex-shrink-0 flex justify-end">
+            <button
+              onClick={onClose}
+              className="rounded-lg border border-neutral-700 px-4 py-2 text-sm"
+              type="button"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function RequestDetailsModal({
+  request,
+  onClose,
+  status,
+  onStatusChange,
+  notes,
+  onNotesChange,
+  onSave,
+  saving,
+}) {
+  if (!request) return null;
+
+  let payload = null;
+  try {
+    if (request.payload) payload = JSON.parse(request.payload);
+  } catch (_) {
+    payload = null;
+  }
+  const builder = payload?.payload_builder;
+  const items = payload?.builder_items || [];
+  const modules = payload?.modules || [];
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      className="fixed inset-0 z-50 flex items-center justify-center"
+    >
+      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
+
+      <div className="relative z-10 w-full max-w-2xl mx-4">
+        <div className="bg-neutral-950 rounded-lg border border-neutral-700 p-6 max-h-[85vh] flex flex-col">
+          <div className="flex items-start justify-between flex-shrink-0">
+            <div>
+              <h3 className="text-lg font-semibold text-white">{request.name || request.type}</h3>
+              <p className="text-sm text-neutral-400">
+                {request.user_email || request.userEmail || `Experiment ID: ${request.id}`}
+              </p>
+              <p className="text-xs text-neutral-500">
+                Requested:{" "}
+                {request.created_at
+                  ? new Date(request.created_at).toLocaleString()
+                  : request.createdAt
+                  ? new Date(request.createdAt).toLocaleString()
+                  : ""}
+              </p>
+            </div>
+            <button
+              onClick={onClose}
+              className="text-neutral-400 hover:text-white"
+              aria-label="Close"
+              type="button"
+            >
+              ✕
+            </button>
+          </div>
+
+          <div className="h-px bg-neutral-800 my-4 flex-shrink-0" />
+
+          <div className="flex-1 overflow-y-auto pr-2 text-sm text-neutral-300 space-y-4 modal-scroll">
+            <div>
+              <h4 className="text-lg font-semibold mb-2 text-white">Basic Information</h4>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <p className="text-neutral-400">ID</p>
+                  <p className="font-medium">{request.id}</p>
+                </div>
+                <div>
+                  <p className="text-neutral-400">Status</p>
+                  <p className="font-medium">{request.status}</p>
+                </div>
+                <div>
+                  <p className="text-neutral-400">Experiment Type</p>
+                  <p className="font-medium">{request.experimentType || "Not specified"}</p>
+                </div>
+                <div>
+                  <p className="text-neutral-400">Modules Needed</p>
+                  <p className="font-medium">{request.ModulesNeeded || "Not specified"}</p>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h4 className="text-lg font-semibold mb-2 text-white">Description</h4>
+              <p className="whitespace-pre-wrap bg-neutral-900 p-3 rounded-md">
+                {request.description || "No description provided"}
+              </p>
+            </div>
+
+            <div>
+              <h4 className="text-lg font-semibold mb-2 text-white">Requester Information</h4>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <p className="text-neutral-400">Email</p>
+                  <p className="font-medium">{request.user_email || "No email provided"}</p>
+                </div>
+                <div>
+                  <p className="text-neutral-400">User ID</p>
+                  <p className="font-medium">{request.user_id || "Not assigned"}</p>
+                </div>
+                <div>
+                  <p className="text-neutral-400">Submitted At</p>
+                  <p className="font-medium">
+                    {request.created_at
+                      ? new Date(request.created_at).toLocaleString()
+                      : "Not recorded"}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {payload && (
+              <div>
+                <h4 className="text-lg font-semibold mb-2 text-white">Payload Information</h4>
+                <div className="space-y-6">
+                  <div className="bg-neutral-900 p-4 rounded-md">
+                    <h5 className="font-medium text-white mb-3">Payload Builder Configuration</h5>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <p className="text-neutral-400 text-sm">Bay Name</p>
+                        <p className="font-medium">{builder?.name || "N/A"}</p>
+                      </div>
+                      <div>
+                        <p className="text-neutral-400 text-sm">Created At</p>
+                        <p className="font-medium">
+                          {builder?.created_at
+                            ? new Date(builder.created_at).toLocaleString()
+                            : "N/A"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-neutral-400 text-sm">Bay Dimensions</p>
+                        <p className="font-medium">
+                          {builder?.bay_width || 0} × {builder?.bay_height || 0}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-neutral-900 p-4 rounded-md">
+                    <h5 className="font-medium text-white mb-3">Payload Items</h5>
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-neutral-800">
+                            <th className="text-left py-2 px-3 text-neutral-400">Module</th>
+                            <th className="text-left py-2 px-3 text-neutral-400">Position</th>
+                            <th className="text-left py-2 px-3 text-neutral-400">Mass</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {items.map((item, index) => (
+                            <tr key={index} className="border-b border-neutral-800">
+                              <td className="py-2 px-3">{item.label}</td>
+                              <td className="py-2 px-3">x: {item.x}, y: {item.y}</td>
+                              <td className="py-2 px-3">{item.massKg} kg</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  <div className="bg-neutral-900 p-4 rounded-md">
+                    <h5 className="font-medium text-white mb-3">Dashboard Information</h5>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <p className="text-neutral-400 text-sm">Plan</p>
+                        <p className="font-medium">{payload?.dashboard_plan || "N/A"}</p>
+                      </div>
+                      <div>
+                        <p className="text-neutral-400 text-sm">Available Credits</p>
+                        <p className="font-medium">{payload?.dashboard_credits || 0}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-neutral-900 p-4 rounded-md">
+                    <h5 className="font-medium text-white mb-3">Available Modules</h5>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                      {modules.map((module, index) => (
+                        <div key={index} className="p-2 border border-neutral-800 rounded">
+                          <p className="font-medium">{module.name}</p>
+                          <p className="text-sm text-neutral-400">
+                            {module.w}×{module.h} • {module.massKg} kg
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div>
+              <h4 className="text-lg font-semibold mb-2 text-white">Status</h4>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <p className="text-neutral-400">Current Status</p>
+                  <p className="font-medium">{request.status}</p>
+                </div>
+                {request.notes && (
+                  <div className="col-span-2">
+                    <p className="text-neutral-400">Notes</p>
+                    <p className="font-medium">{request.notes || "No notes provided"}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {request.files && request.files.length > 0 && (
+              <div>
+                <h4 className="text-lg font-semibold mb-2 text-white">Attached Files</h4>
+                <ul className="list-disc list-inside">
+                  {request.files.map((file, index) => (
+                    <li key={index} className="text-neutral-400">
+                      {file.filename}
+                      {typeof file.size === "number"
+                        ? ` (${(file.size / 1024).toFixed(2)} KB)`
+                        : ""}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+
+          <div className="mt-4 pt-4 border-t border-neutral-800 flex-shrink-0 flex flex-col gap-3">
+            <div className="flex flex-col gap-2">
+              <label className="text-neutral-400">Status:</label>
+              <select
+                className="bg-neutral-900 border border-neutral-700 rounded px-3 py-2 text-neutral-200"
+                value={status}
+                onChange={(e) => onStatusChange(e.target.value)}
+              >
+                <option value="pending approval">Pending Approval</option>
+                <option value="experiment queued">Experiment Queued</option>
+                <option value="experiment completed">Experiment Completed</option>
+                <option value="failed">Failed</option>
+              </select>
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-neutral-400">Notes:</label>
+              <textarea
+                className="w-full rounded border border-neutral-700 bg-neutral-900 p-2 text-sm text-white"
+                rows={3}
+                placeholder="Add notes..."
+                value={notes}
+                onChange={(e) => onNotesChange(e.target.value)}
+              />
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={onSave}
+                disabled={saving}
+                className={`rounded-lg px-4 py-2 text-sm font-medium ${
+                  saving ? "bg-neutral-700 cursor-not-allowed" : "bg-emerald-600 hover:bg-emerald-500"
+                }`}
+                type="button"
+              >
+                {saving ? "Saving..." : "Save Changes"}
+              </button>
+              <button
+                onClick={onClose}
+                className="rounded-lg border border-neutral-700 px-4 py-2 text-sm"
+                type="button"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function RequestsCard({
+  statusFilter,
+  onStatusFilterChange,
+  requests,
+  onViewDetails,
+}) {
+  return (
+    <Card title="Approvals" subtitle="Review and confirm pending requests.">
+      <div className="mb-4 flex items-center gap-4">
+        <label className="text-neutral-400">Filter by Status:</label>
+        <select
+          className="bg-neutral-900 border border-neutral-700 rounded px-3 py-1 text-neutral-200"
+          onChange={(e) => onStatusFilterChange(e.target.value)}
+          value={statusFilter}
+        >
+          <option value="all">All Statuses</option>
+          <option value="pending approval">Pending Approval</option>
+          <option value="experiment queued">Experiment Queued</option>
+          <option value="experiment completed">Experiment Completed</option>
+          <option value="failed">Failed</option>
+        </select>
+      </div>
+
+      <div className="mt-4">
+        {requests.length === 0 ? (
+          <div className="text-neutral-400 p-6 text-center">
+            No pending requests.
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-left text-sm">
+              <thead className="text-neutral-300 border-b border-neutral-800">
+                <tr>
+                  <th className="px-4 py-3">Requester</th>
+                  <th className="px-4 py-3">Type</th>
+                  <th className="px-4 py-3">Submitted</th>
+                  <th className="px-4 py-3">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="text-neutral-200">
+                {requests.map((r) => (
+                  <tr
+                    key={r.id}
+                    className="border-b border-neutral-800 hover:bg-neutral-900/30 transition-colors"
+                  >
+                    <td className="px-4 py-3 align-middle">
+                      {r.user_email || r.userEmail || "No email provided"}
+                    </td>
+                    <td className="px-4 py-3 align-middle">{r.name || r.type}</td>
+                    <td className="px-4 py-3 align-middle text-neutral-400">
+                      {r.created_at
+                        ? new Date(r.created_at).toLocaleString()
+                        : r.createdAt
+                        ? new Date(r.createdAt).toLocaleString()
+                        : ""}
+                    </td>
+                    <td className="px-4 py-3 align-middle">
+                      <button
+                        onClick={() => onViewDetails(r)}
+                        className="rounded-md bg-indigo-600 px-3 py-1 text-sm hover:bg-indigo-500"
+                        type="button"
+                      >
+                        View request
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </Card>
+  );
+}
+
 export function DashboardCards({
   tier,
   credits,
@@ -942,8 +1454,6 @@ export function DashboardCards({
   onChangeTier,
   planOptions,
   subscriptionPlan,
-  onSubscriptionPlanChange,
-  onSubscriptionPlanSubmit,
   form,
   onFormChange,
   onSubmit,
@@ -974,8 +1484,6 @@ export function DashboardCards({
   selectedLabel,
   onMoveSelected,
   onRemoveSelected,
-  requests,
-  onCancelRequest,
   canSubmit,
   onCombinedSubmit,
 }) {
@@ -990,14 +1498,6 @@ export function DashboardCards({
           planOptions={planOptions}
           subscriptionPlan={subscriptionPlan}
         />
-        <section className="grid w-full gap-8 md:grid-cols-2">
-          <SubscriptionCard
-            subscriptionPlan={subscriptionPlan}
-            onChange={onSubscriptionPlanChange}
-            onSubmit={onSubscriptionPlanSubmit}
-          />
-          <RequestsTable requests={requests} onCancel={onCancelRequest} />
-        </section>
         <section className="w-full flex flex-col gap-8">
           <RequestForm
             form={form}
