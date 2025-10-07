@@ -38,6 +38,20 @@ export default function Navbar() {
     };
   }, []);
 
+  useEffect(() => {
+    function onProfileUpdate() {
+      const updated = auth.currentUser;
+      if (updated) {
+        // Clone to force React to notice the change (displayName may mutate in place)
+        setUser({ ...updated });
+      }
+    }
+    if (typeof window !== "undefined") {
+      window.addEventListener("auth:user-updated", onProfileUpdate);
+      return () => window.removeEventListener("auth:user-updated", onProfileUpdate);
+    }
+  }, []);
+
   async function handleSignOut() {
     try {
       await signOut(auth);

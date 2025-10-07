@@ -1,6 +1,7 @@
 
 "use client";
 import Card, { HomeNavCards } from "../../components/card";
+import Link from "next/link";
 import "./globals.css";
 import React, { useEffect, useState } from 'react';
 import { auth } from "../lib/firebaseClient";
@@ -96,14 +97,21 @@ export default function Homepage() {
     navCards.push({
       href: "/requests",
       title: "Approvals",
-      description: "Review and approve mission requests (admin only).",
+      description: "Review and approve mission requests.",
       icon: (
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><title>Approvals</title><path d="M12 2l7 4v6c0 5-3 9-7 10-4-1-7-5-7-10V6l7-4z" /><path d="M9.5 12.5l2 2 4-4" /></svg>
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><title>Approvals</title><path d="M12 2l7 4v6c0 5-3 9-7 10-4-1-7-5-7-10V6l7-4z" /><path d="M9.5 12.5l2 2 4-4" /></svg>
       ),
       highlight: {
-        className: "border-2 border-amber-700 bg-[#1a1400]",
-        titleClassName: "text-yellow-400",
-        subtitleClassName: "text-yellow-400",
+        className: "",
+        borderClassName: "border-amber-500/70",
+        backgroundClassName: "bg-amber-500/20",
+        titleClassName: "text-amber-300 text-xl font-semibold mb-1",
+        titleHoverClassName: "group-hover:text-amber-200",
+        subtitleClassName: "text-left text-sm text-amber-200",
+        subtitleHoverClassName: "group-hover:text-amber-100",
+        iconClassName: "text-amber-300",
+        titleColorClassName: "text-amber-300",
+        subtitleColorClassName: "text-amber-200",
       },
     });
   }
@@ -142,13 +150,13 @@ export default function Homepage() {
           <p className="text-neutral-400 text-center text-base max-w-xl">
             Experience the future of satellite education. Watch the demo and see how easy it is to get started with Tungsten Satellite.
           </p>
-          <a
+          <Link
             href="/login"
             className="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-2 px-6 rounded-lg shadow transition text-lg inline-block text-center"
             style={{ minWidth: 180 }}
           >
             Get Started
-          </a>
+          </Link>
         </div>
       )}
     </div>

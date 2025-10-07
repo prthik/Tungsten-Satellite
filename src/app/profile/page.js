@@ -118,7 +118,12 @@ export default function Profile() {
       const user = auth.currentUser;
       if (!user) throw new Error("Not signed in.");
       await updateProfile(user, { displayName: newName });
+      await user.reload();
       if (nameSpanRef.current) nameSpanRef.current.textContent = newName;
+      if (newNameRef.current) newNameRef.current.value = newName;
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("auth:user-updated"));
+      }
       setMessage("Display name updated.", "green");
     } catch (err) {
       setMessage(friendlyMessage(err.code, err.message));

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import React, { useRef, useState, useMemo } from "react";
 
 export function Grid({ W, H, items, onCellClick, selectedId, draggingId, onDragStart, onDragOver, onDragEnd }) {
@@ -194,12 +195,30 @@ export function PublisherCard() {
 }
 
 
-export default function Card({ title, subtitle, number, children }) {
+export default function Card({
+  title,
+  subtitle,
+  number,
+  children,
+  className = "",
+  highlight,
+}) {
+  const borderClass = highlight?.borderClassName || "border-neutral-500";
+  const backgroundClass = highlight?.backgroundClassName || "bg-neutral-950";
+  const titleColor = highlight?.titleColorClassName || "text-neutral-500";
+  const subtitleColor =
+    highlight?.subtitleColorClassName || "text-neutral-400";
+  const titleClass =
+    highlight?.titleClassName ||
+    `${titleColor} text-2xl font-semibold mb-2`;
+  const subtitleClass =
+    highlight?.subtitleClassName ||
+    `${subtitleColor} text-base mb-2`;
   return (
-    <div className="bg-neutral-950 p-6 rounded-lg border border-neutral-500 flex flex-col">
-      {title && <span className="text-neutral-500 text-2xl font-semibold mb-2">{title}</span>}
+    <div className={`${backgroundClass} p-6 rounded-lg border ${borderClass} flex flex-col ${className}`}>
+      {title && <span className={titleClass}>{title}</span>}
       {typeof number !== 'undefined' && <span className="text-3xl my-4">{number}</span>}
-      {subtitle && <span className="text-neutral-400 text-base mb-2">{subtitle}</span>}
+      {subtitle && <span className={subtitleClass}>{subtitle}</span>}
       {children}
     </div>
   );
@@ -769,7 +788,7 @@ export function ProfileCard({
         <hr className="border-neutral-800 my-2" />
 
         <form onSubmit={onMakeAdmin} className="space-y-2">
-          <label className="block text-sm text-neutral-300">Admin code (prototype)</label>
+          <label className="block text-sm text-neutral-300">Admin code (temporary password: metaldetector)</label>
           <input
             ref={adminCodeRef}
             type="password"
@@ -908,25 +927,58 @@ export function HomeNavCards({ cards }) {
   return (
     <div className="w-full max-w-5xl flex flex-col gap-4 mt-8">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {cards.map((card) => (
-          <a
-            key={card.href || card.title}
-            href={card.href}
-            target={card.external ? "_blank" : undefined}
-            rel={card.external ? "noopener noreferrer" : undefined}
-            className="group flex flex-1 min-h-[160px] max-w-xs mx-auto"
-          >
-            <Card className={card.highlight ? card.highlight.className : undefined}>
-              <span className="mb-2 text-neutral-200">{card.icon}</span>
-              <span className={`text-xl font-semibold mb-1 group-hover:text-neutral-300 ${card.highlight ? card.highlight.titleClassName : ""}`}>
+        {cards.map((card) => {
+          const highlight = card.highlight;
+          const iconClass = highlight?.iconClassName || "text-neutral-200";
+          const titleBaseClass =
+            highlight?.titleClassName || "text-neutral-300";
+          const titleHoverClass =
+            highlight?.titleHoverClassName || "group-hover:text-neutral-300";
+          const subtitleClass = [
+            "text-left text-sm",
+            highlight?.subtitleClassName || "text-neutral-400",
+            highlight?.subtitleHoverClassName || "",
+          ]
+            .filter(Boolean)
+            .join(" ");
+
+          const linkProps = {
+            className: "group flex flex-1 min-h-[160px] max-w-xs mx-auto",
+          };
+
+          const cardContent = (
+            <Card
+              className={highlight?.className}
+              highlight={highlight}
+            >
+              <span className={`mb-2 ${iconClass}`}>{card.icon}</span>
+              <span className={`text-xl font-semibold mb-1 ${titleBaseClass} ${titleHoverClass}`}>
                 {card.title}
               </span>
-              <span className={`text-neutral-400 text-left text-sm ${card.highlight ? card.highlight.subtitleClassName : ""}`}>
-                {card.description}
-              </span>
+              <span className={subtitleClass}>{card.description}</span>
             </Card>
-          </a>
-        ))}
+          );
+
+          if (card.external) {
+            return (
+              <a
+                key={card.href || card.title}
+                href={card.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                {...linkProps}
+              >
+                {cardContent}
+              </a>
+            );
+          }
+
+          return (
+            <Link key={card.href || card.title} href={card.href || "#"} {...linkProps}>
+              {cardContent}
+            </Link>
+          );
+        })}
       </div>
     </div>
   );
@@ -1516,8 +1568,8 @@ export function DashboardCards({
   onCombinedSubmit,
 }) {
   return (
-    <div className="flex min-h-0 w-full flex-1 flex-col bg-neutral-800 text-white p-8">
-      <div className="space-y-8">
+    <div className="w-full bg-neutral-800 text-white p-8">
+      <div className="mx-auto flex w-full max-w-6xl flex-col space-y-8">
         <Header
           tier={tier}
           credits={credits}
