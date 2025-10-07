@@ -9,24 +9,14 @@ const spacemono = localFont({
   display: "swap",
   src: [
     {
-      path: "../../public/font/SpaceMono-Regular.ttf",
+      path: "./fonts/SpaceMono-Regular.ttf",
       weight: "400",
       style: "normal",
     },
     {
-      path: "../../public/font/SpaceMono-Italic.ttf",
-      weight: "400",
-      style: "italic",
-    },
-    {
-      path: "../../public/font/SpaceMono-Bold.ttf",
+      path: "./fonts/SpaceMono-Bold.ttf",
       weight: "700",
       style: "normal",
-    },
-    {
-      path: "../../public/font/SpaceMono-BoldItalic.ttf",
-      weight: "700",
-      style: "italic",
     },
   ],
 });
