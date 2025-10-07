@@ -1,13 +1,34 @@
 // app/layout.js (or wherever your RootLayout is)
-import { Space_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import Navbar from "../../components/navbar";
 import Sidebar from "../../components/sidebar";
 
-const spacemono = Space_Mono({
-  weight: ["400", "700"],
+const spacemono = localFont({
   variable: "--font-mono",
-  subsets: ["latin"],
+  display: "swap",
+  src: [
+    {
+      path: "../../public/font/SpaceMono-Regular.ttf",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../../public/font/SpaceMono-Italic.ttf",
+      weight: "400",
+      style: "italic",
+    },
+    {
+      path: "../../public/font/SpaceMono-Bold.ttf",
+      weight: "700",
+      style: "normal",
+    },
+    {
+      path: "../../public/font/SpaceMono-BoldItalic.ttf",
+      weight: "700",
+      style: "italic",
+    },
+  ],
 });
 
 export const metadata = {
