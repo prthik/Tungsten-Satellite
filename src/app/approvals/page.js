@@ -121,7 +121,7 @@ export default function RequestsPage() {
 
   if (loadingAuth) {
     return (
-      <div className="min-h-screen bg-neutral-800 flex items-center justify-center p-6">
+      <div className="flex min-h-0 w-full flex-1 items-center justify-center bg-neutral-800 p-6">
         <div className="text-neutral-400">Checking auth...</div>
       </div>
     );
@@ -133,7 +133,7 @@ export default function RequestsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-800 p-8">
+    <div className="flex min-h-0 w-full flex-1 flex-col bg-neutral-800 p-8">
       <div className="max-w-6xl mx-auto">
         <RequestsCard
           statusFilter={statusFilter}

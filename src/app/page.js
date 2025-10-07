@@ -108,8 +108,14 @@ export default function Homepage() {
     });
   }
 
+  const isLoggedIn = Boolean(userDisplay);
+
   return (
-    <div className="min-h-screen bg-neutral-800 text-white p-8 flex flex-col items-center">
+    <div
+      className={`w-full bg-neutral-800 text-white p-8 flex flex-col items-center ${
+        isLoggedIn ? "" : "min-h-0 flex-1 justify-center"
+      }`}
+    >
       {userDisplay && (
         <React.Fragment>
           <div className="w-full flex flex-col items-start mb-8">
@@ -118,8 +124,8 @@ export default function Homepage() {
           <HomeNavCards cards={navCards} />
         </React.Fragment>
       )}
-      {!userDisplay && (
-        <>
+      {!isLoggedIn && (
+        <div className="flex w-full max-w-2xl flex-col items-center justify-center gap-4 py-8">
           <video
             autoPlay
             loop
@@ -127,21 +133,23 @@ export default function Homepage() {
             playsInline
             preload="auto"
             controls={false}
-            className="w-full max-w-2xl rounded-lg border border-neutral-500 mt-8 mb-4 bg-black shadow-lg"
+            className="w-full max-w-2xl rounded-lg border border-neutral-500 bg-black shadow-lg"
             style={{ backgroundColor: '#000', display: 'block' }}
           >
             <source src="/0000-0300.mp4" type="video/mp4" />
             Sorry, your browser does not support embedded videos.
           </video>
-          <p className="text-neutral-400 text-center text-base mb-4 max-w-xl">Experience the future of satellite education. Watch the demo and see how easy it is to get started with Tungsten Satellite.</p>
+          <p className="text-neutral-400 text-center text-base max-w-xl">
+            Experience the future of satellite education. Watch the demo and see how easy it is to get started with Tungsten Satellite.
+          </p>
           <a
             href="/login"
-            className="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-2 px-6 rounded-lg shadow transition text-lg mb-8 inline-block text-center"
+            className="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-2 px-6 rounded-lg shadow transition text-lg inline-block text-center"
             style={{ minWidth: 180 }}
           >
             Get Started
           </a>
-        </>
+        </div>
       )}
     </div>
   );

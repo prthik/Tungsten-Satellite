@@ -101,7 +101,7 @@ export default function Page() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-800 flex justify-center px-4 py-12">
+    <div className="flex min-h-0 w-full flex-1 justify-center bg-neutral-800 px-4 py-12">
       <div className="w-full max-w-md mt-8">
         <LoginCard
           mode={mode}

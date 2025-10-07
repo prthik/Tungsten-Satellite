@@ -56,7 +56,7 @@ export default function Sidebar() {
   if (!user) return null;
 
   return (
-    <div className="flex flex-col w-64 min-h-screen border-r border-neutral-500 bg-neutral-900 shrink-0">
+    <div className="flex h-full min-h-0 w-64 flex-col border-r border-neutral-500 bg-neutral-900 shrink-0 overflow-y-auto">
       <div className="py-8 px-6 space-y-6">
         {/* Home link */}
         <Link

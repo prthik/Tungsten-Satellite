@@ -307,7 +307,7 @@ export default function Profile() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-800 flex items-start justify-center py-12 px-6">
+    <div className="flex min-h-0 w-full flex-1 items-start justify-center bg-neutral-800 py-12 px-6">
       <div className="w-full max-w-3xl">
         <ProfileCard
           nameSpanRef={nameSpanRef}

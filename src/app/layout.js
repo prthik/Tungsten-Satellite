@@ -24,11 +24,14 @@ export default function RootLayout({ children }) {
         <Navbar />
 
         {/* main row: sidebar + content; flex-1 makes this row fill remaining height */}
-        <div className="flex flex-1 max-w-screen w-full overflow-hidden">
+        <div className="flex flex-1 min-h-0 max-w-screen w-full overflow-hidden">
           <Sidebar />
 
           {/* content column — allow it to scroll if content is larger than available height */}
-          <main className="flex-1 overflow-auto">{children}</main>
+          <main className="flex flex-1 min-h-0 flex-col overflow-y-auto overflow-x-hidden bg-neutral-800 text-white">
+            <div className="flex flex-1 flex-col">{children}</div>
+            <div className="h-8 shrink-0 lg:h-12" aria-hidden="true" />
+          </main>
         </div>
       </body>
     </html>
