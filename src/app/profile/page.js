@@ -94,7 +94,7 @@ export default function Profile() {
       }
     });
     return () => unsub();
-  }, [router, updateAdminFlag]);
+  }, [router, updateAdminFlag, notifyAdminListeners]);
 
   function friendlyMessage(code, message) {
     if (!code) return message;

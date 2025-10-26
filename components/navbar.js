@@ -6,6 +6,7 @@ import Link from "next/link";
 import { auth } from "../src/lib/firebaseClient";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [user, setUser] = useState(null); // null => signed out, object => signed in
@@ -99,7 +100,14 @@ export default function Navbar() {
     <div className="flex w-full justify-between py-6 px-10 border-b bg-neutral-950 border-neutral-500 items-center">
       <div className="text-2xl font-bold flex items-center gap-2">
         <Link href={"/"} className="flex items-center gap-2">
-          <img src="/cube.svg" alt="Cube logo" className="w-12 h-12 inline-block align-middle" />
+          <Image
+            src="/cube.svg"
+            alt="Cube logo"
+            width={48}
+            height={48}
+            className="inline-block align-middle"
+            priority
+          />
           <span>Tungsten Satellite</span>
         </Link>
       </div>

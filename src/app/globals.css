@@ -8,6 +8,7 @@
   --card-title: #a3a3a3;  /* text-neutral-500 */
   --card-subtitle: #d4d4d4; /* text-neutral-400 */
   --font-mono: var(--font-mono), 'Space Mono', 'Menlo', 'Monaco', 'Consolas', monospace;
+  --page-background-image: none;
 }
 
 /* globals.css */
@@ -18,6 +19,11 @@ html, body {
 
 body {
   background: var(--background);
+  background-image: var(--page-background-image);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
   color: var(--foreground);
   font-family: var(--font-mono), 'Space Mono', 'Menlo', 'Monaco', 'Consolas', monospace;
 }
